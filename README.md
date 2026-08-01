@@ -54,6 +54,53 @@ Change any material mandate term and the ackrate fingerprint changes. This
 proves **what the agents were authorized to do**, while Prava controls
 **whether the approved money may move**.
 
+## What ackrate does
+
+ackrate is the trust and intent layer between an application and an on-chain
+execution contract. It turns human-readable purchase terms into a deterministic
+mandate, then registers that exact mandate so anyone can verify what was
+approved. It does not select research, hold payment credentials, or replace
+Prava; it makes the authorization portable and tamper-evident.
+
+### SDK and contract setup
+
+| Component | Role in this repository |
+| --- | --- |
+| [`@ackrate/ap2`](https://www.npmjs.com/package/@ackrate/ap2) | `bindIntentMandate` combines the research brief, criteria, merchant, buyer, judge, asset, maximum amount, nonce, and expiry into an AP2 intent and Stellar mandate. |
+| [`@ackrate/core`](https://www.npmjs.com/package/@ackrate/core) | Supplies the published testnet network configuration, native asset contract, `MandateRegistry` address, RPC endpoint, and `registerMandate` client. |
+| [`@stellar/stellar-sdk`](https://www.npmjs.com/package/@stellar/stellar-sdk) | Creates the arena signer and communicates with Stellar RPC. A missing testnet signer account is funded before registration. |
+| `MandateRegistry` | Records the approved mandate on Stellar testnet and returns a confirmed transaction hash. It is an audit registry, not a payment contract. |
+
+Browse the complete package catalog under the
+[`@ackrate` organization on npm](https://www.npmjs.com/org/ackrate).
+
+```mermaid
+sequenceDiagram
+    participant Arena as Research arena
+    participant AP2 as @ackrate/ap2
+    participant Core as @ackrate/core
+    participant RPC as Stellar RPC
+    participant Registry as MandateRegistry
+
+    Arena->>AP2: Bind brief, criteria, budget, parties, and expiry
+    AP2-->>Arena: intentHash, mandateId, bindingVersion
+    Arena->>Arena: Persist the public fingerprint
+    Arena->>AP2: Rebuild the mandate before anchoring
+    AP2-->>Arena: Exact deterministic mandate
+    Arena->>Arena: Reject any fingerprint or signer mismatch
+    Arena->>Core: registerMandate(mandate, signer)
+    Core->>RPC: Submit signed testnet transaction
+    RPC->>Registry: Register mandate
+    Registry-->>Arena: Confirmed transaction hash
+```
+
+The application never accepts a configurable contract destination. It pins
+`ackrate.testnet.mandateRegistryId`, reconstructs the mandate from stored arena
+terms, verifies that its ID matches the original fingerprint, and only then
+signs the registration. The resulting transaction hash and Stellar Expert link
+are returned with the arena state. Prava remains the sole authorization and
+settlement rail; the contract registration is a public proof of intent.
+
 ## System architecture
 
 ```mermaid
