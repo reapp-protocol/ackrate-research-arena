@@ -8,7 +8,7 @@ or complete on its own.
 
 Local base URL: `http://localhost:3000`
 
-Railway base URL: `https://<service>.up.railway.app`
+Railway base URL: `https://ackrate-research-arena-production.up.railway.app`
 
 Set `CORS_ORIGINS` on the API to the comma-separated frontend origins. All
 requests use JSON. No Prava or model secret belongs in the frontend.

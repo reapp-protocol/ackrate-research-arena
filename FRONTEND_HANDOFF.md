@@ -13,7 +13,7 @@ The server state is truth; the frontend never invents payment or completion.
 Set exactly one public frontend variable:
 
 ```env
-VITE_ARENA_API_URL=https://THE-VERIFIED-RAILWAY-API-DOMAIN
+VITE_ARENA_API_URL=https://ackrate-research-arena-production.up.railway.app
 ```
 
 Do not put OpenAI, Anthropic, Prava, database, or npm credentials in the

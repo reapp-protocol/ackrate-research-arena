@@ -189,7 +189,7 @@ Railway project
     └── DATABASE_URL injected into ackrate-api
 
 Frontend
-└── VITE_ARENA_API_URL=https://<ackrate-api>.up.railway.app
+└── VITE_ARENA_API_URL=https://ackrate-research-arena-production.up.railway.app
 ```
 
 The repository root is the only deployable Node package. Ackrate SDK releases

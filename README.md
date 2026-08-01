@@ -127,3 +127,5 @@ their exact provenance and compatibility boundary are documented in
 repositories are outside this repo and were not modified.
 
 Repository: [reapp-protocol/ackrate-research-arena](https://github.com/reapp-protocol/ackrate-research-arena)
+
+Live API: [ackrate-research-arena-production.up.railway.app](https://ackrate-research-arena-production.up.railway.app)
