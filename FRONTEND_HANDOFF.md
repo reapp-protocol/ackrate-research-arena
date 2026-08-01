@@ -141,7 +141,8 @@ Buttons: **Copy answer**, **Open sources**, **Export evidence bundle**, and
 ### 7. `failed`
 
 Show `failure.message`, `failure.stage`, and any provider names in
-`failure.providers`. This receipt is intentionally safe for the UI: it never
+`failure.providers`. Render each `failure.providerFailures` item as a concise
+provider/reason row. This receipt is intentionally safe for the UI: it never
 contains model responses, prompts, keys, private criteria, or losing research.
 For a funded arena, show **Retry research** and call the same `/run` endpoint.
 Never advance the UI optimistically. A settlement failure remains

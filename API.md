@@ -57,6 +57,10 @@ export type ArenaFailure = {
   stage: "configuration" | "research" | "judging" | "allocation";
   message: string;
   providers: Array<"openai" | "anthropic">;
+  providerFailures: Array<{
+    provider: "openai" | "anthropic";
+    reason: "quota" | "authentication" | "model_unavailable" | "invalid_response" | "network" | "unknown";
+  }>;
   failedAt: string;
 };
 

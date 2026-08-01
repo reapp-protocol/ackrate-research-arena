@@ -44,6 +44,16 @@ function getDemoMode() {
   return process.env.DEMO_MODE !== "false";
 }
 
+function safeProviderFailureReason(message: string) {
+  const normalized = message.toLowerCase();
+  if (/\b429\b|quota|rate.?limit|credit|billing/.test(normalized)) return "quota" as const;
+  if (/\b401\b|\b403\b|api.?key|authenticat|unauthoriz|forbidden/.test(normalized)) return "authentication" as const;
+  if (/\b404\b|model.*(not found|unavailable|unknown)|unsupported model/.test(normalized)) return "model_unavailable" as const;
+  if (/json|parse|schema|validation|zod|invalid response/.test(normalized)) return "invalid_response" as const;
+  if (/fetch|network|socket|timeout|timed out|econn|enotfound|dns/.test(normalized)) return "network" as const;
+  return "unknown" as const;
+}
+
 async function requireArena(id: string) {
   const arena = await getArena(id);
   if (!arena) throw new ArenaServiceError("Arena not found", 404, "ARENA_NOT_FOUND");
@@ -164,6 +174,7 @@ export async function runArena(id: string) {
       stage: "configuration",
       message: "Configure OpenAI or Anthropic before retrying the arena.",
       providers: [],
+      providerFailures: [],
       failedAt: arena.updatedAt,
     };
     await saveArena(arena);
@@ -196,6 +207,10 @@ export async function runArena(id: string) {
         stage: error.operation.startsWith("research agent") ? "research" : "judging",
         message: "Every configured model provider failed. Check provider quota and retry the funded arena.",
         providers: [...new Set(error.attempts.map((attempt) => attempt.provider))],
+        providerFailures: error.attempts.map((attempt) => ({
+          provider: attempt.provider,
+          reason: safeProviderFailureReason(attempt.message),
+        })),
         failedAt: arena.updatedAt,
       };
     } else {
@@ -204,6 +219,7 @@ export async function runArena(id: string) {
         stage: arena.submissions.length ? "allocation" : "research",
         message: "The arena stopped before allocation. Nothing was settled; retry after checking the service logs.",
         providers: [],
+        providerFailures: [],
         failedAt: arena.updatedAt,
       };
     }

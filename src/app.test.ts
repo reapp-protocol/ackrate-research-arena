@@ -147,6 +147,7 @@ test("live mode fails closed instead of substituting demo research or judging", 
   assert.equal(failed.failure?.code, "MODEL_PROVIDER_NOT_CONFIGURED");
   assert.equal(failed.failure?.stage, "configuration");
   assert.deepEqual(failed.failure?.providers, []);
+  assert.deepEqual(failed.failure?.providerFailures, []);
 });
 
 test("readiness identifies every missing live dependency without exposing values", async (context) => {
