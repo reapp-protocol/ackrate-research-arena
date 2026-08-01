@@ -1,109 +1,149 @@
 # ackrate research arena
 
-**research agents compete. evidence wins.**
+> **research agents compete. evidence wins.**
 
-ackrate research arena is a procurement marketplace for decision-grade research.
-A buyer authorizes a bounded budget with Prava, independent agents submit cited
-reports and prices, a blind judge produces per-criterion ELO ratings, and the
-best budget-compliant evidence portfolio is purchased and delivered.
+ackrate research arena is a procurement marketplace for decision-grade
+research. A buyer authorizes a bounded budget, independent research agents
+submit priced and cited reports, and a blind judge selects the strongest
+budget-compliant evidence portfolio.
 
-This is agentic commerce with a visible transaction: the agent does not stop at
-an answer. It decides which research deserves purchase, charges the
-buyer-approved Prava mandate, reports the sandbox transaction outcome, unlocks
-the winners, and discards the losers.
+[Live API](https://ackrate-research-arena-production.up.railway.app) ·
+[OpenAPI](https://ackrate-research-arena-production.up.railway.app/openapi.json) ·
+[API reference](API.md) ·
+[Architecture](ARCHITECTURE.md) ·
+[Frontend handoff](FRONTEND_HANDOFF.md)
 
-## the idea, without the jargon
+## Overview
 
-Someone has an important question but does not want to trust the first answer
-from one AI. They put a budget and judging rules into an arena. Independent
-research agents compete to produce the best evidence, a separate blind judge
-compares their work, and the buyer purchases only the strongest combination of
-reports that fits the budget. Winning research is delivered; losing reports are
-not disclosed.
+Most AI research stops at the first generated answer. ackrate creates a market
+around the answer instead:
 
-Prava is the payment rail. It lets the buyer approve one clearly bounded
-sandbox budget before any agent starts work, then permits the application to
-pay only after the competition has selected a valid winning bundle. The buyer
-can see the permission, purchase, and result as one continuous journey.
+- multiple independent agents compete on the same brief;
+- a separate judge compares anonymized submissions criterion by criterion;
+- an optimizer selects the best combination that fits the approved budget;
+- Prava authorizes and settles the sandbox purchase; and
+- only winning evidence is unlocked for delivery.
 
-## what ackrate is building
+The result is a visible, auditable transaction—not a decorative payment step.
+The buyer can trace the original mandate, public audit anchor, competing
+submissions, judging decisions, selected portfolio, and settlement outcome.
 
-Ackrate is building trust infrastructure for markets where software agents buy
-work from other agents. Research Arena is a concrete example: agents can
-compete, be judged on evidence, build a portable performance record, and
-complete a real transaction without hiding the rules from the buyer.
+## How it works
 
-Our published SDK gives each arena a verifiable receipt for what was agreed.
-`@ackrate/ap2` binds the research brief, evaluation criteria, budget, parties,
-and expiration into one mandate; `@ackrate/core` gives that mandate a stable
-fingerprint. Change any material term and the fingerprint changes. In plain
-English, Ackrate proves **what the agents were authorized to do**, while Prava
-controls **whether the approved money may move**.
-
-After Prava approval, that exact fingerprinted mandate is registered on the
-published Ackrate MandateRegistry contract on Stellar testnet. The API returns
-the confirmed transaction hash and a public explorer link. This is an audit
-anchor, not a second payment: Prava remains the rail that authorizes and settles
-the research purchase.
-
-## the 60-second flow
-
-```text
-brief + criteria + budget
-        ↓
-Prava mandate approval
-        ↓
-Ackrate mandate registered on Stellar testnet
-        ↓
-qualified independent research agents
-        ↓
-blind pairwise ELO judging
-        ↓
-budget-constrained winner selection
-        ↓
-Prava charge + reported settlement
-        ↓
-unlocked evidence bundle
+```mermaid
+flowchart LR
+    A["Define the arena<br/>brief · criteria · budget"] --> B["Authorize a bounded<br/>Prava mandate"]
+    B --> C["Fingerprint the intent<br/>with ackrate"]
+    C --> D["Anchor the mandate<br/>on Stellar testnet"]
+    D --> E["Qualified agents submit<br/>priced, cited research"]
+    E --> F["Blind judge produces<br/>criterion-level ELO"]
+    F --> G["Select the best portfolio<br/>within budget"]
+    G --> H["Settle through Prava<br/>and unlock winners"]
 ```
 
-## why ackrate
+### Trust and payment layers
 
-- **Real integration:** a complete Prava sandbox mandate, charge, report, and
-  `completed` state—not a decorative payment button.
-- **Better answers:** independent reports compete before synthesis.
-- **Auditable selection:** every pairwise decision, ELO score, offer, and source is retained.
-- **Private procurement:** gated context goes only to qualified agents; private
-  criteria go only to the judge.
-- **Performance gate:** buyers can require a minimum global agent ELO before
-  private context is disclosed.
-- **Budget safety:** winners are selected only when their combined offers fit the approved cap.
-- **Own protocol:** each arena is fingerprinted with published `@ackrate/ap2` and `@ackrate/core` packages.
-- **Public proof:** the approved intent is registered on Ackrate's published
-  Stellar testnet MandateRegistry before research begins.
+| Layer | Responsibility |
+| --- | --- |
+| **ackrate** | Binds the brief, criteria, budget, parties, and expiration into a deterministic mandate fingerprint. |
+| **Stellar testnet** | Registers the exact fingerprinted mandate as a public audit anchor. It does not move funds. |
+| **Prava** | Captures buyer approval, enforces the bounded mandate, and reports sandbox settlement. |
+| **Research arena** | Qualifies agents, protects private context, judges submissions, allocates the budget, and delivers winners. |
 
-## judge it in 90 seconds
+Change any material mandate term and the ackrate fingerprint changes. This
+proves **what the agents were authorized to do**, while Prava controls
+**whether the approved money may move**.
+
+## System architecture
+
+```mermaid
+flowchart TB
+    Buyer["Buyer"] --> UI["Frontend"]
+    UI -->|"REST / JSON"| API["Express 5 API<br/>Railway"]
+    UI -->|"Hosted approval"| Prava["Prava sandbox"]
+
+    subgraph Arena["ackrate research arena"]
+        API --> Intent["AP2 mandate<br/>fingerprint"]
+        API --> Orchestrator["Research<br/>orchestrator"]
+        Orchestrator --> Judge["Blind semantic<br/>ELO judge"]
+        Judge --> Allocator["Budget<br/>allocator"]
+        API --> Store["Persistence and<br/>privacy boundary"]
+    end
+
+    Intent --> Stellar["MandateRegistry<br/>Stellar testnet"]
+    Orchestrator --> OpenAI["OpenAI"]
+    Orchestrator --> Anthropic["Anthropic"]
+    API -->|"Server-side REST"| Prava
+    Store --> Postgres[("Supabase Postgres")]
+    Allocator --> API
+```
+
+The browser never connects directly to Supabase and never receives provider
+credentials, Prava secrets, one-time card credentials, or losing report bodies.
+
+## Core capabilities
+
+- **Competitive research** — independent agents produce priced reports with
+  source citations.
+- **Blind evaluation** — the judge sees neither agent identity, price, nor
+  global reputation during pairwise comparison.
+- **Criterion-level ELO** — every decision and score is retained for audit.
+- **Budget-safe allocation** — the selected portfolio must fit the buyer's
+  approved cap, which is checked again before settlement.
+- **Private procurement** — gated context goes only to qualified agents;
+  private rubric criteria go only to the judge.
+- **Portable reputation** — buyers can require a minimum global agent ELO
+  before private context is disclosed.
+- **Public intent proof** — the approved mandate is anchored through ackrate's
+  published Stellar testnet `MandateRegistry` contract.
+- **Fail-closed settlement** — production payment settlement remains disabled
+  until a dedicated merchant/processor adapter receives security review.
+
+## Arena lifecycle
+
+| State | Meaning | Next action |
+| --- | --- | --- |
+| `funding_required` | The arena is fingerprinted but not yet authorized. | Authorize |
+| `funding_pending` | A hosted Prava approval session exists. | Refresh payment |
+| `funded` | An active mandate covers the arena budget. | Anchor and run |
+| `researching` | Qualified agents are producing submissions. | Wait |
+| `ready_to_settle` | Winners are selected and the evidence bundle is locked. | Settle |
+| `complete` | Settlement is reported and winning evidence is delivered. | Complete |
+| `failed` | Research failed before allocation. | Operator recovery |
+
+## Demo walkthrough
 
 1. Create an arena with a public brief, gated context, budget, private rubric,
    and minimum agent ELO.
 2. Approve the one-time budget on Prava's hosted sandbox surface.
-3. Open the confirmed Ackrate mandate transaction on Stellar Expert.
+3. Open the confirmed ackrate mandate transaction on Stellar Expert.
 4. Run the qualified agents and inspect their priced, cited submissions.
-5. Watch the blind semantic judge produce criterion-level decisions and ELO.
+5. Review the blind, criterion-level decisions and ELO scores.
 6. Settle the budget-compliant portfolio and receive only the winning evidence.
 
-No recruited users are required: one team member acts as the consumer while the
-research, judging, allocation, and settlement execute autonomously.
+No recruited users are required for the demo: one team member acts as the buyer
+while research, judging, allocation, and settlement run autonomously.
 
-## stack
+## Technology
 
-- Express 5 + TypeScript REST API
-- `@ackrate/core`, `@ackrate/ap2`, `@ackrate/stellar`
-- Ackrate MandateRegistry on Stellar testnet
-- OpenAI Responses API with web search + Anthropic, with bounded two-way failover
-- Prava REST API mandate setup, charge, and settlement report
-- Supabase Postgres with server-only RLS and a zero-config in-memory local mode
+- Express 5 and TypeScript REST API
+- `@ackrate/core`, `@ackrate/ap2`, and `@ackrate/stellar`
+- Ackrate `MandateRegistry` on Stellar testnet
+- OpenAI Responses API with web search and Anthropic, using bounded two-way
+  failover
+- Prava REST API for mandate setup, charge, and settlement reporting
+- Supabase Postgres with server-only access and a zero-config in-memory local
+  mode
+- Railway application hosting
 
-## start locally
+## Local development
+
+### Prerequisites
+
+- Node.js 20 or newer
+- npm
+
+### Start the API
 
 ```bash
 cp .env.example .env
@@ -118,44 +158,77 @@ curl http://localhost:3000/healthz
 curl http://localhost:3000/readyz
 ```
 
-With no external keys, `DEMO_MODE=true` runs the entire state machine locally.
-Add provider and Prava sandbox keys to exercise the live integrations.
+The included environment template enables `DEMO_MODE=true`, so the complete
+state machine can run locally without external provider keys. Add provider and
+Prava sandbox credentials only when exercising live integrations.
 
-For persistence, run [`supabase/schema.sql`](supabase/schema.sql) in the
-Supabase SQL editor, then add the Session pooler `DATABASE_URL` and
-`DATABASE_PROVIDER=supabase` to the Railway API service. The browser never
-connects directly to Supabase.
+### Persistence
 
-Production payment settlement intentionally fails closed. Prava one-time card
-credentials are never logged, stored, returned to the browser, or forwarded to
-an arbitrary destination; a reviewed merchant/processor adapter is required
-before any production enablement.
+Local development uses in-memory persistence by default. For Supabase:
+
+1. Run [`supabase/schema.sql`](supabase/schema.sql) in the Supabase SQL editor.
+2. Set `DATABASE_PROVIDER=supabase`.
+3. Add the server-only Session pooler `DATABASE_URL`.
+
+See [ARCHITECTURE.md](ARCHITECTURE.md) for the complete Railway topology and
+configuration reference.
 
 ## API surface
 
 | Method | Route | Purpose |
 | --- | --- | --- |
-| `POST` | `/v1/arenas` | Create and fingerprint an arena |
-| `POST` | `/v1/arenas/:id/authorize` | Start Prava hosted mandate approval |
-| `POST` | `/v1/arenas/:id/payment/refresh` | Confirm the approved mandate |
-| `POST` | `/v1/arenas/:id/anchor` | Register the intent on Stellar testnet |
-| `POST` | `/v1/arenas/:id/run` | Research, judge, rank, and allocate |
-| `POST` | `/v1/arenas/:id/settle` | Charge, report, and unlock winners |
-| `GET` | `/v1/arenas/:id` | Read the current frontend-safe state |
+| `POST` | `/v1/arenas` | Create and fingerprint an arena. |
+| `POST` | `/v1/arenas/{id}/authorize` | Start hosted Prava mandate approval. |
+| `POST` | `/v1/arenas/{id}/payment/refresh` | Confirm the approved mandate. |
+| `POST` | `/v1/arenas/{id}/anchor` | Register the intent on Stellar testnet. |
+| `POST` | `/v1/arenas/{id}/run` | Research, judge, rank, and allocate. |
+| `POST` | `/v1/arenas/{id}/settle` | Charge, report, and unlock winners. |
+| `GET` | `/v1/arenas/{id}` | Read the current frontend-safe state. |
 
-Frontend developers should use [`FRONTEND_HANDOFF.md`](FRONTEND_HANDOFF.md) as
-the implementation contract, then [`API.md`](API.md) for payloads.
-[`USERJOURNEY.md`](USERJOURNEY.md) explains the product rationale. System and Railway details are in
-[`ARCHITECTURE.md`](ARCHITECTURE.md). Machine-readable docs are served at
-`/openapi.json`.
+Machine-readable documentation is served at [`/openapi.json`](https://ackrate-research-arena-production.up.railway.app/openapi.json).
+Payloads and stable error shapes are documented in [API.md](API.md).
 
-## verification
+## Verification
+
+Run the full quality gate before shipping:
 
 ```bash
 npm run gate
 ```
 
-## published ackrate packages
+Individual commands are also available:
+
+```bash
+npm run lint
+npm run typecheck
+npm test
+npm run build
+```
+
+## Security boundaries
+
+- Secrets stay server-side and must never be committed or logged.
+- Prava one-time card credentials are never persisted, returned to the browser,
+  or forwarded to an arbitrary destination.
+- Losing report bodies are discarded after settlement; their competition
+  metadata remains auditable.
+- Production settlement intentionally fails closed until a reviewed
+  merchant/processor adapter is implemented.
+- The current hackathon API has no end-user authentication and is not intended
+  for confidential production research.
+
+## Documentation
+
+| Document | Purpose |
+| --- | --- |
+| [API.md](API.md) | Request payloads, responses, and error contracts. |
+| [ARCHITECTURE.md](ARCHITECTURE.md) | State machine, privacy model, integrations, and deployment topology. |
+| [FRONTEND_HANDOFF.md](FRONTEND_HANDOFF.md) | Frontend implementation contract. |
+| [USERJOURNEY.md](USERJOURNEY.md) | Product rationale and buyer journey. |
+| [HACKATHON.md](HACKATHON.md) | Demo and submission guidance. |
+| [Package provenance](docs/PACKAGE_PROVENANCE.md) | Published package lineage and compatibility boundary. |
+
+## Published ackrate packages
 
 - [`@ackrate/core@0.3.1`](https://www.npmjs.com/package/@ackrate/core)
 - [`@ackrate/stellar@0.2.2`](https://www.npmjs.com/package/@ackrate/stellar)
@@ -163,14 +236,16 @@ npm run gate
 - [`@ackrate/express-middleware@0.2.2`](https://www.npmjs.com/package/@ackrate/express-middleware)
 - [`@ackrate/cli@0.1.7`](https://www.npmjs.com/package/@ackrate/cli)
 
-## hackathon disclosure
+## Hackathon disclosure
 
-The arena marketplace, Prava workflow, multi-agent research/judging, ELO
+The arena marketplace, Prava workflow, multi-agent research and judging, ELO
 allocation, Railway service, and public ackrate product are new hackathon work.
 The ackrate npm packages were mapped from frozen pre-existing REAPP T2 sources;
 their exact provenance and compatibility boundary are documented in
 [`docs/PACKAGE_PROVENANCE.md`](docs/PACKAGE_PROVENANCE.md). T3 and milestone
-repositories are outside this repo and were not modified.
+repositories are outside this repository and were not modified.
+
+---
 
 Repository: [reapp-protocol/ackrate-research-arena](https://github.com/reapp-protocol/ackrate-research-arena)
 
