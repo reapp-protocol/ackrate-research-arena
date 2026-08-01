@@ -5,7 +5,7 @@ import {
   createBudgetMandateSession,
   findActiveMandate,
 } from "./prava.js";
-import { qualifiedAgentCount, runResearchArena } from "./research.js";
+import { providerMode, qualifiedAgentCount, runResearchArena } from "./research.js";
 import {
   initialStellarAnchor,
   registerArenaMandateOnTestnet,
@@ -153,6 +153,16 @@ export async function runArena(id: string) {
     arena.submissions = [];
     arena.evaluations = [];
     arena.finalBundle = undefined;
+  }
+  if (!getDemoMode() && !providerMode().semanticJudge) {
+    arena.status = "failed";
+    arena.updatedAt = now();
+    await saveArena(arena);
+    throw new ArenaServiceError(
+      "A model provider is not configured for the live arena; add OpenAI or Anthropic",
+      503,
+      "MODEL_PROVIDER_NOT_CONFIGURED",
+    );
   }
   if (!getDemoMode() && arena.payment.status === "active") {
     arena = await anchorArena(id);
