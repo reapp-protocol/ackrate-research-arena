@@ -44,6 +44,16 @@ export const openApi = {
         responses: { "200": { description: "Updated arena" } },
       },
     },
+    "/v1/arenas/{id}/anchor": {
+      post: {
+        summary: "Register the approved Ackrate intent mandate on Stellar testnet",
+        parameters: [{ $ref: "#/components/parameters/ArenaId" }],
+        responses: {
+          "200": { description: "Confirmed Stellar testnet transaction" },
+          "409": { description: "Prava mandate not approved" },
+        },
+      },
+    },
     "/v1/arenas/{id}/run": {
       post: {
         summary: "Run competing researchers, blind ELO, and synthesis",
@@ -108,6 +118,7 @@ export const openApi = {
           currency: { const: "USD" },
           status: { type: "string", enum: ["funding_required", "funding_pending", "funded", "researching", "ready_to_settle", "complete", "failed"] },
           payment: { type: "object", additionalProperties: true },
+          stellarAnchor: { type: "object", additionalProperties: true },
           criteria: { type: "array", items: { type: "object", additionalProperties: true } },
           submissions: { type: "array", items: { type: "object", additionalProperties: true } },
           evaluations: { type: "array", items: { type: "object", additionalProperties: true } },

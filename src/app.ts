@@ -4,6 +4,7 @@ import express, { type NextFunction, type Request, type Response } from "express
 import { z } from "zod";
 import {
   ArenaServiceError,
+  anchorArena,
   authorizeArena,
   createArena,
   getArenaById,
@@ -126,6 +127,11 @@ export function createApp() {
 
   app.post("/v1/arenas/:id/payment/refresh", async (request, response) => {
     const arena = await refreshArenaPayment(request.params.id);
+    response.json({ data: toClientArena(arena) });
+  });
+
+  app.post("/v1/arenas/:id/anchor", async (request, response) => {
+    const arena = await anchorArena(request.params.id);
     response.json({ data: toClientArena(arena) });
   });
 

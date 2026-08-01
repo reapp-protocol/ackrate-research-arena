@@ -1,11 +1,15 @@
 import { createHash, randomUUID } from "node:crypto";
-import { createArenaFingerprint } from "./fingerprint.js";
+import { ARENA_MANDATE_TTL_MS, createArenaFingerprint } from "./fingerprint.js";
 import {
   chargeAndReportMandate,
   createBudgetMandateSession,
   findActiveMandate,
 } from "./prava.js";
 import { qualifiedAgentCount, runResearchArena } from "./research.js";
+import {
+  initialStellarAnchor,
+  registerArenaMandateOnTestnet,
+} from "./stellar-anchor.js";
 import { getArena, listArenas, saveArena } from "./store.js";
 import type { Arena, CreateArenaInput, Criterion } from "./types.js";
 
@@ -42,6 +46,7 @@ function getDemoMode() {
 async function requireArena(id: string) {
   const arena = await getArena(id);
   if (!arena) throw new ArenaServiceError("Arena not found", 404, "ARENA_NOT_FOUND");
+  arena.stellarAnchor ??= initialStellarAnchor(arena.id);
   return arena;
 }
 
@@ -60,7 +65,7 @@ export async function createArena(input: CreateArenaInput) {
     visibility: criterion.visibility || "public",
     weight: 1 / requestedCriteria.length,
   }));
-  const expiresAt = new Date(Date.now() + 6 * 24 * 60 * 60 * 1000);
+  const expiresAt = new Date(Date.now() + ARENA_MANDATE_TTL_MS);
   const arena: Arena = {
     id,
     slug: `${slugify(input.topicPublic)}-${id.slice(0, 6)}`,
@@ -84,6 +89,7 @@ export async function createArena(input: CreateArenaInput) {
       budget: input.budget,
       expiresAt,
     }),
+    stellarAnchor: initialStellarAnchor(id),
     payment: {
       mode: getDemoMode() ? "demo" : "prava",
       status: "not_started",
@@ -138,7 +144,7 @@ export async function refreshArenaPayment(id: string) {
 }
 
 export async function runArena(id: string) {
-  const arena = await requireArena(id);
+  let arena = await requireArena(id);
   const retryingFailedRun = arena.status === "failed" && arena.payment.status === "active";
   if (arena.status !== "funded" && !retryingFailedRun) {
     throw new ArenaServiceError("Authorize the research budget before running the arena", 409, "BUDGET_NOT_AUTHORIZED");
@@ -147,6 +153,9 @@ export async function runArena(id: string) {
     arena.submissions = [];
     arena.evaluations = [];
     arena.finalBundle = undefined;
+  }
+  if (!getDemoMode() && arena.payment.status === "active") {
+    arena = await anchorArena(id);
   }
   arena.status = "researching";
   arena.updatedAt = now();
@@ -161,6 +170,56 @@ export async function runArena(id: string) {
     return saveArena(arena);
   } catch (error) {
     arena.status = "failed";
+    arena.updatedAt = now();
+    await saveArena(arena);
+    throw error;
+  }
+}
+
+export async function anchorArena(id: string) {
+  const arena = await requireArena(id);
+  arena.stellarAnchor ??= initialStellarAnchor(arena.id);
+  if (getDemoMode()) {
+    throw new ArenaServiceError(
+      "Stellar anchoring is available only in the live sandbox flow",
+      409,
+      "STELLAR_ANCHOR_REQUIRES_LIVE_MODE",
+    );
+  }
+  if (arena.payment.status !== "active" && arena.payment.status !== "completed") {
+    throw new ArenaServiceError(
+      "Approve the Prava mandate before registering the Ackrate mandate on Stellar",
+      409,
+      "STELLAR_ANCHOR_REQUIRES_PRAVA_APPROVAL",
+    );
+  }
+  if (arena.stellarAnchor.status === "confirmed" && arena.stellarAnchor.transactionHash) {
+    return arena;
+  }
+
+  arena.stellarAnchor.status = "registering";
+  arena.stellarAnchor.error = undefined;
+  arena.updatedAt = now();
+  await saveArena(arena);
+  try {
+    const registered = await registerArenaMandateOnTestnet(arena);
+    arena.fingerprint.expiresAt ??= registered.expiresAt;
+    arena.stellarAnchor = {
+      network: "testnet",
+      contractId: arena.stellarAnchor.contractId,
+      status: "confirmed",
+      signerAddress: registered.signerAddress,
+      transactionHash: registered.transactionHash,
+      explorerUrl: registered.explorerUrl,
+      registeredAt: now(),
+    };
+    arena.updatedAt = now();
+    return saveArena(arena);
+  } catch (error) {
+    arena.stellarAnchor.status = "failed";
+    arena.stellarAnchor.error = error instanceof Error
+      ? error.message.replace(/\s+/g, " ").slice(0, 500)
+      : "Stellar testnet registration failed";
     arena.updatedAt = now();
     await saveArena(arena);
     throw error;

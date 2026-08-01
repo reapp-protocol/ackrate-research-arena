@@ -17,6 +17,10 @@ judgment, allocation, and settlement run autonomously. A real Prava sandbox
 authorization, charge, and reported settlement—not external user adoption—is the
 acceptance condition.
 
+After Prava approval and before research, the backend registers the exact
+fingerprinted Ackrate mandate on Stellar testnet. This produces a public audit
+transaction without moving the research budget; Prava remains the payment rail.
+
 ## product promise
 
 The buyer should understand this sentence within five seconds:
@@ -89,6 +93,10 @@ Server state: `funded`.
 
 Primary action: **Run research arena** → `POST /v1/arenas/:id/run`.
 
+The backend first anchors the approved intent on Stellar testnet. Show
+**Registering Ackrate mandate** before the research stages. When the response
+returns, display `stellarAnchor.explorerUrl` as **View public mandate proof**.
+
 This call can take 30–180 seconds with live providers. While it runs, show three
 named agent lanes:
 
@@ -109,6 +117,7 @@ Show:
 - locked report metadata and source count only;
 - evaluation count and public criteria;
 - the winning portfolio total versus budget;
+- the confirmed Stellar mandate transaction link;
 - a locked final-bundle panel.
 
 The API intentionally redacts findings and private context until settlement.
@@ -133,6 +142,7 @@ Unlock:
   `discarded` and its research content withheld;
 - Prava transaction identifier;
 - arena/AP2 fingerprint.
+- Stellar testnet mandate transaction link.
 
 Primary actions:
 

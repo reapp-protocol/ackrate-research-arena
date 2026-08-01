@@ -86,6 +86,18 @@ export type AckrateFingerprint = {
   mandateId: string;
   bindingVersion: string;
   package: "@ackrate/ap2";
+  expiresAt?: string;
+};
+
+export type StellarAnchorState = {
+  network: "testnet";
+  contractId: string;
+  status: "not_started" | "registering" | "confirmed" | "failed";
+  signerAddress: string;
+  transactionHash?: string;
+  explorerUrl?: string;
+  registeredAt?: string;
+  error?: string;
 };
 
 export type Arena = {
@@ -105,6 +117,7 @@ export type Arena = {
   currency: "USD";
   status: ArenaStatus;
   fingerprint: AckrateFingerprint;
+  stellarAnchor: StellarAnchorState;
   payment: PaymentState;
   submissions: ArenaSubmission[];
   evaluations: ArenaEvaluation[];

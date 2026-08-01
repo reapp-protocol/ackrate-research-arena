@@ -40,12 +40,20 @@ fingerprint. Change any material term and the fingerprint changes. In plain
 English, Ackrate proves **what the agents were authorized to do**, while Prava
 controls **whether the approved money may move**.
 
+After Prava approval, that exact fingerprinted mandate is registered on the
+published Ackrate MandateRegistry contract on Stellar testnet. The API returns
+the confirmed transaction hash and a public explorer link. This is an audit
+anchor, not a second payment: Prava remains the rail that authorizes and settles
+the research purchase.
+
 ## the 60-second flow
 
 ```text
 brief + criteria + budget
         ↓
 Prava mandate approval
+        ↓
+Ackrate mandate registered on Stellar testnet
         ↓
 qualified independent research agents
         ↓
@@ -70,15 +78,18 @@ unlocked evidence bundle
   private context is disclosed.
 - **Budget safety:** winners are selected only when their combined offers fit the approved cap.
 - **Own protocol:** each arena is fingerprinted with published `@ackrate/ap2` and `@ackrate/core` packages.
+- **Public proof:** the approved intent is registered on Ackrate's published
+  Stellar testnet MandateRegistry before research begins.
 
 ## judge it in 90 seconds
 
 1. Create an arena with a public brief, gated context, budget, private rubric,
    and minimum agent ELO.
 2. Approve the one-time budget on Prava's hosted sandbox surface.
-3. Run the qualified agents and inspect their priced, cited submissions.
-4. Watch the blind semantic judge produce criterion-level decisions and ELO.
-5. Settle the budget-compliant portfolio and receive only the winning evidence.
+3. Open the confirmed Ackrate mandate transaction on Stellar Expert.
+4. Run the qualified agents and inspect their priced, cited submissions.
+5. Watch the blind semantic judge produce criterion-level decisions and ELO.
+6. Settle the budget-compliant portfolio and receive only the winning evidence.
 
 No recruited users are required: one team member acts as the consumer while the
 research, judging, allocation, and settlement execute autonomously.
@@ -87,6 +98,7 @@ research, judging, allocation, and settlement execute autonomously.
 
 - Express 5 + TypeScript REST API
 - `@ackrate/core`, `@ackrate/ap2`, `@ackrate/stellar`
+- Ackrate MandateRegistry on Stellar testnet
 - OpenAI Responses API with web search + Anthropic, with bounded two-way failover
 - Prava REST API mandate setup, charge, and settlement report
 - Supabase Postgres with server-only RLS and a zero-config in-memory local mode
@@ -126,6 +138,7 @@ before any production enablement.
 | `POST` | `/v1/arenas` | Create and fingerprint an arena |
 | `POST` | `/v1/arenas/:id/authorize` | Start Prava hosted mandate approval |
 | `POST` | `/v1/arenas/:id/payment/refresh` | Confirm the approved mandate |
+| `POST` | `/v1/arenas/:id/anchor` | Register the intent on Stellar testnet |
 | `POST` | `/v1/arenas/:id/run` | Research, judge, rank, and allocate |
 | `POST` | `/v1/arenas/:id/settle` | Charge, report, and unlock winners |
 | `GET` | `/v1/arenas/:id` | Read the current frontend-safe state |

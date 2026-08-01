@@ -51,6 +51,8 @@ Always show:
 - qualified agents, such as “2 of 3 qualified by global ELO”;
 - five-step timeline: **Fund → Research → Judge → Purchase → Reveal**;
 - the `@ackrate/ap2` fingerprint as a small trust detail.
+- the confirmed `stellarAnchor.explorerUrl` as **View public mandate proof**
+  whenever `stellarAnchor.status === "confirmed"`.
 
 Render the primary action entirely from the returned `status`:
 
@@ -89,7 +91,8 @@ Allow at least 210 seconds. While waiting, show three lanes:
 - Decision Architect — turns evidence into an actionable answer.
 
 Show the current stage as Researching → Validating bids → Blind judging →
-Selecting within budget. Do not fake token streams or completion percentages.
+Selecting within budget. Prefix those stages with **Registering Ackrate mandate
+on Stellar testnet**. Do not fake token streams or completion percentages.
 
 ### 4. `researching`
 
@@ -108,6 +111,7 @@ Show every valid participant row with:
 - global ELO used for qualification;
 - arena ELO earned by blind judging;
 - Winner or Discarded label.
+- confirmed Stellar transaction link.
 
 Show the number of pairwise evaluations and the winning total against the
 authorized budget. Keep all report evidence locked. Private criteria remain
@@ -154,6 +158,7 @@ optimistically. A settlement failure remains `ready_to_settle` and should show
 | Winners transmitted | Purchased reports and evidence unlock at `complete` |
 | Losers discarded | Losing metadata remains; losing research never unlocks |
 | Agent completes a transaction | Prava authorization, settlement, and transaction ID |
+| Intent is publicly verifiable | Ackrate mandate transaction on Stellar testnet |
 
 ## frontend acceptance gate
 
@@ -165,6 +170,7 @@ optimistically. A settlement failure remains `ready_to_settle` and should show
 - The bundle never unlocks before `status === "complete"`.
 - `payment.mode === "demo"` is unmistakable.
 - `payment.mode === "prava"` ends with a real returned Prava transaction ID.
+- `stellarAnchor.status === "confirmed"` exposes a valid Stellar Expert transaction link.
 - Refreshing the arena page reconstructs the UI from `GET /v1/arenas/:id`.
 - API errors show their message and copyable request ID.
 
@@ -174,7 +180,8 @@ optimistically. A settlement failure remains `ready_to_settle` and should show
    public criterion, one private criterion, and minimum global ELO 1200.
 2. Create the arena and point out that two of three agents qualified.
 3. Authorize the bounded budget with Prava.
-4. Run the arena: qualified agents return priced, cited research; the blind
+4. Run the arena, open the confirmed Ackrate mandate transaction on Stellar
+   Expert, then show qualified agents returning priced, cited research; the blind
    judge compares every pair against both criteria and assigns arena ELO.
 5. Show that the selected winner total is no more than $40, then purchase it.
 6. Reveal only winning reports and sources, show the Prava transaction ID, and

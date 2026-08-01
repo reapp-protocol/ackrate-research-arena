@@ -12,6 +12,7 @@ flowchart LR
     FE["Frontend\nFE team"] -->|"REST / JSON"| API["Express API\nRailway"]
     API --> DB[("Supabase Postgres")]
     API --> ACK["Ackrate SDK\nAP2 fingerprint"]
+    ACK --> STELLAR["Stellar testnet\nMandateRegistry"]
     API --> OA["OpenAI\nresearch + web search"]
     API --> AN["Anthropic\nindependent research"]
     API --> JUDGE["Blind ELO judge"]
@@ -32,6 +33,7 @@ sequenceDiagram
     participant UI as Frontend
     participant API as Ackrate API
     participant Prava
+    participant Stellar as Stellar testnet
     participant Agents as Qualified agents
     participant Judge as ELO judge
 
@@ -44,6 +46,8 @@ sequenceDiagram
     UI->>API: Refresh payment
     API->>Prava: Find active mandate
     UI->>API: Run arena
+    API->>Stellar: Register exact fingerprinted mandate
+    Stellar-->>API: Confirmed transaction hash
     API->>Agents: Qualified brief disclosure
     Agents-->>API: Priced cited reports
     API->>Judge: Blind criterion comparisons
@@ -69,6 +73,13 @@ sequenceDiagram
 Payment state is separate because settlement failure is recoverable without
 rerunning research: `not_started → pending_approval → active → charging →
 completed`. A failed charge returns to a retryable settlement screen.
+
+The Stellar transaction is also separate from payment state. It registers the
+approved Ackrate intent as a public audit anchor before research begins; it does
+not transfer value. Prava remains the only payment rail in this hackathon flow.
+The server verifies the reconstructed mandate ID exactly matches the fingerprint
+before signing, pins the published testnet contract address, and persists the
+confirmed transaction hash and explorer URL.
 
 ## marketplace logic
 

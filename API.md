@@ -41,6 +41,17 @@ export type PaymentStatus =
   | "not_started" | "pending_approval" | "active" | "charging"
   | "completed" | "failed";
 
+export type StellarAnchor = {
+  network: "testnet";
+  contractId: "CCHQ5G4Y4YBMY6D3TYYJSVJVCKUM22Q6TMKCCHVAHY4X7K6QELQACZRM";
+  status: "not_started" | "registering" | "confirmed" | "failed";
+  signerAddress: string;
+  transactionHash?: string;
+  explorerUrl?: string;
+  registeredAt?: string;
+  error?: string;
+};
+
 export type CreateArenaInput = {
   buyerEmail: string;
   topicPublic: string;       // 12–4000 chars
@@ -133,7 +144,9 @@ export type Arena = {
     mandateId: string;
     bindingVersion: string;
     package: "@ackrate/ap2";
+    expiresAt?: string;
   };
+  stellarAnchor: StellarAnchor;
   payment: {
     mode: "prava" | "demo";
     status: PaymentStatus;
@@ -191,6 +204,7 @@ completion. The Prava charge uses an arena-derived idempotency reference.
 | `GET` | `/v1/arenas/:id` | `Success<Arena>` | Canonical refresh |
 | `POST` | `/v1/arenas/:id/authorize` | `Success<Arena>` | Start Prava approval |
 | `POST` | `/v1/arenas/:id/payment/refresh` | `Success<Arena>` | Confirm active mandate |
+| `POST` | `/v1/arenas/:id/anchor` | `Success<Arena>` | Register approved intent on Stellar testnet |
 | `POST` | `/v1/arenas/:id/run` | `Success<Arena>` | Research, judge, allocate |
 | `POST` | `/v1/arenas/:id/settle` | `Success<Arena>` | Charge, report, deliver |
 
