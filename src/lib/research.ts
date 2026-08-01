@@ -145,6 +145,10 @@ function parseJson(text: string): unknown {
   return JSON.parse(stripped);
 }
 
+function providerErrorMessage(error: unknown) {
+  return error instanceof Error ? error.message : "unknown provider error";
+}
+
 async function researchWithOpenAI(arena: Arena, agent: AgentDefinition): Promise<ResearchReport> {
   const apiKey = process.env.OPENAI_API_KEY || process.env.OPEN_API_KEY;
   if (!apiKey) throw new Error("OPENAI_API_KEY is not configured");
@@ -180,6 +184,25 @@ async function researchWithAnthropic(arena: Arena, agent: AgentDefinition): Prom
   return reportSchema.parse(parseJson(text.text));
 }
 
+async function runLiveAgent(arena: Arena, agent: AgentDefinition): Promise<{
+  report: ResearchReport;
+  provider: "openai" | "anthropic";
+}> {
+  if (agent.provider === "anthropic") {
+    return { report: await researchWithAnthropic(arena, agent), provider: "anthropic" };
+  }
+
+  try {
+    return { report: await researchWithOpenAI(arena, agent), provider: "openai" };
+  } catch (error) {
+    if (!process.env.ANTHROPIC_API_KEY) throw error;
+    console.warn(
+      `[research] OpenAI failed for ${agent.id}; retrying with Anthropic: ${providerErrorMessage(error)}`,
+    );
+    return { report: await researchWithAnthropic(arena, agent), provider: "anthropic" };
+  }
+}
+
 function demoReport(arena: Arena, agent: AgentDefinition): ResearchReport {
   const angle = agent.angle.charAt(0).toUpperCase() + agent.angle.slice(1);
   return {
@@ -212,22 +235,52 @@ function demoReport(arena: Arena, agent: AgentDefinition): ResearchReport {
 
 async function runAgent(arena: Arena, agent: AgentDefinition): Promise<ArenaSubmission> {
   const demoMode = process.env.DEMO_MODE !== "false";
-  const report = demoMode
-    ? demoReport(arena, agent)
-    : agent.provider === "openai"
-      ? await researchWithOpenAI(arena, agent)
-      : await researchWithAnthropic(arena, agent);
+  const result = demoMode
+    ? { report: demoReport(arena, agent), provider: "demo" as const }
+    : await runLiveAgent(arena, agent);
   return {
     id: randomUUID(),
     agentId: agent.id,
     agentName: agent.name,
-    provider: demoMode ? "demo" : agent.provider,
+    provider: result.provider,
     bidAmount: Math.max(1, Number((arena.budget * agent.bidShare).toFixed(2))),
     globalElo: agent.globalElo,
-    report,
+    report: result.report,
     elo: 1000,
     isWinner: false,
   };
+}
+
+function expectedComparisonCount(arena: Arena, submissions: ArenaSubmission[]) {
+  return arena.criteria.length * (submissions.length * (submissions.length - 1) / 2);
+}
+
+function blindJudgePrompt(arena: Arena, submissions: ArenaSubmission[], expectedCount: number) {
+  return `You are the blind judgment agent for ackrate research arena.
+
+Compare every pair of submissions once for every criterion. Judge only the report content against the criterion. Do not infer agent identity, use price, use global ELO, or reward verbosity. Private criteria are intentionally available to you but were hidden from contestants.
+
+Criteria:\n${JSON.stringify(arena.criteria)}
+
+Anonymous submissions:\n${JSON.stringify(submissions.map((submission) => ({ id: submission.id, report: submission.report })))}
+
+Return only valid JSON with a comparisons array containing exactly ${expectedCount} entries. Preserve the supplied criterion and submission IDs. Each entry must contain criterionId, leftSubmissionId, rightSubmissionId, winnerSubmissionId, and a decision-grade rationale. The winner must be one of the two compared IDs.`;
+}
+
+function applySemanticJudgments(
+  arena: Arena,
+  submissions: ArenaSubmission[],
+  parsed: z.infer<typeof judgeResponseSchema>,
+) {
+  const expectedCount = expectedComparisonCount(arena, submissions);
+  if (parsed.comparisons.length !== expectedCount) {
+    throw new Error(`Judge returned ${parsed.comparisons.length} of ${expectedCount} comparisons`);
+  }
+  const evaluations: ArenaEvaluation[] = parsed.comparisons.map((evaluation) => ({
+    ...evaluation,
+    id: randomUUID(),
+  }));
+  return applyEloEvaluations(submissions, arena.criteria, evaluations);
 }
 
 async function judgeWithOpenAI(
@@ -236,19 +289,11 @@ async function judgeWithOpenAI(
 ): Promise<ReturnType<typeof runBlindElo>> {
   const apiKey = process.env.OPENAI_API_KEY || process.env.OPEN_API_KEY;
   if (!apiKey) throw new Error("OPENAI_API_KEY is not configured for semantic judging");
-  const expectedCount = arena.criteria.length * (submissions.length * (submissions.length - 1) / 2);
+  const expectedCount = expectedComparisonCount(arena, submissions);
   const client = new OpenAI({ apiKey });
   const response = await client.responses.create({
     model: process.env.OPENAI_JUDGE_MODEL || process.env.OPENAI_MODEL || "gpt-5-mini",
-    input: `You are the blind judgment agent for ackrate research arena.
-
-Compare every pair of submissions once for every criterion. Judge only the report content against the criterion. Do not infer agent identity, use price, use global ELO, or reward verbosity. Private criteria are intentionally available to you but were hidden from contestants.
-
-Criteria:\n${JSON.stringify(arena.criteria)}
-
-Anonymous submissions:\n${JSON.stringify(submissions.map((submission) => ({ id: submission.id, report: submission.report })))}
-
-Return exactly ${expectedCount} comparisons. Preserve the supplied criterion and submission IDs. The winner must be one of the two compared IDs.`,
+    input: blindJudgePrompt(arena, submissions, expectedCount),
     text: {
       verbosity: "low",
       format: {
@@ -260,14 +305,36 @@ Return exactly ${expectedCount} comparisons. Preserve the supplied criterion and
     },
   });
   const parsed = judgeResponseSchema.parse(parseJson(response.output_text));
-  if (parsed.comparisons.length !== expectedCount) {
-    throw new Error(`Judge returned ${parsed.comparisons.length} of ${expectedCount} comparisons`);
+  return applySemanticJudgments(arena, submissions, parsed);
+}
+
+async function judgeWithAnthropic(
+  arena: Arena,
+  submissions: ArenaSubmission[],
+): Promise<ReturnType<typeof runBlindElo>> {
+  if (!process.env.ANTHROPIC_API_KEY) throw new Error("ANTHROPIC_API_KEY is not configured for semantic judging");
+  const expectedCount = expectedComparisonCount(arena, submissions);
+  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+  const message = await client.messages.create({
+    model: process.env.ANTHROPIC_MODEL || "claude-sonnet-4-5-20250929",
+    max_tokens: 3000,
+    system: "Return only valid JSON. Do not include markdown fences or commentary.",
+    messages: [{ role: "user", content: blindJudgePrompt(arena, submissions, expectedCount) }],
+  });
+  const text = message.content.find((block) => block.type === "text");
+  if (!text || text.type !== "text") throw new Error("Anthropic returned no semantic judgment");
+  const parsed = judgeResponseSchema.parse(parseJson(text.text));
+  return applySemanticJudgments(arena, submissions, parsed);
+}
+
+async function runSemanticJudge(arena: Arena, submissions: ArenaSubmission[]) {
+  try {
+    return await judgeWithOpenAI(arena, submissions);
+  } catch (error) {
+    if (!process.env.ANTHROPIC_API_KEY) throw error;
+    console.warn(`[judge] OpenAI failed; retrying with Anthropic: ${providerErrorMessage(error)}`);
+    return judgeWithAnthropic(arena, submissions);
   }
-  const evaluations: ArenaEvaluation[] = parsed.comparisons.map((evaluation) => ({
-    ...evaluation,
-    id: randomUUID(),
-  }));
-  return applyEloEvaluations(submissions, arena.criteria, evaluations);
 }
 
 function synthesize(arena: Arena, winners: ArenaSubmission[]): FinalBundle {
@@ -309,7 +376,7 @@ export async function runResearchArena(arena: Arena): Promise<Pick<Arena, "submi
   }
   const ranked = process.env.DEMO_MODE !== "false"
     ? runBlindElo(validSubmissions, arena.criteria)
-    : await judgeWithOpenAI(arena, validSubmissions);
+    : await runSemanticJudge(arena, validSubmissions);
   const winners = selectWinningPortfolio(ranked.submissions, arena.budget);
   const winnerIds = new Set(winners.map((winner) => winner.id));
   const submissions = ranked.submissions.map((submission) => ({
@@ -327,6 +394,6 @@ export function providerMode() {
   return {
     openai: Boolean(process.env.OPENAI_API_KEY || process.env.OPEN_API_KEY),
     anthropic: Boolean(process.env.ANTHROPIC_API_KEY),
-    semanticJudge: Boolean(process.env.OPENAI_API_KEY || process.env.OPEN_API_KEY),
+    semanticJudge: Boolean(process.env.OPENAI_API_KEY || process.env.OPEN_API_KEY || process.env.ANTHROPIC_API_KEY),
   };
 }

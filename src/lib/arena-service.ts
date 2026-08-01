@@ -139,8 +139,14 @@ export async function refreshArenaPayment(id: string) {
 
 export async function runArena(id: string) {
   const arena = await requireArena(id);
-  if (arena.status !== "funded") {
+  const retryingFailedRun = arena.status === "failed" && arena.payment.status === "active";
+  if (arena.status !== "funded" && !retryingFailedRun) {
     throw new ArenaServiceError("Authorize the research budget before running the arena", 409, "BUDGET_NOT_AUTHORIZED");
+  }
+  if (retryingFailedRun) {
+    arena.submissions = [];
+    arena.evaluations = [];
+    arena.finalBundle = undefined;
   }
   arena.status = "researching";
   arena.updatedAt = now();
