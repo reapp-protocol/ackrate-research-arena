@@ -1,0 +1,45 @@
+{
+  "name": "@ackrate/core",
+  "version": "0.3.1",
+  "description": "ackrate's thin, untrusted client for contract-enforced agent payment mandates on Stellar.",
+  "keywords": [
+    "stellar",
+    "soroban",
+    "ackrate",
+    "agent-payments",
+    "x402",
+    "ap2",
+    "mandate",
+    "payments",
+    "ai-agents",
+    "sdk"
+  ],
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "node --import tsx --test src/x402.test.ts src/payment-sequence.test.ts src/fetch.test.ts test/index.test.mjs"
+  },
+  "dependencies": {
+    "@ackrate/stellar": "^0.2.2",
+    "@stellar/stellar-sdk": "^14.5.0",
+    "buffer": "6.0.3"
+  },
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/reapp-protocol/ackrate-research-arena.git",
+    "directory": "packages/core"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

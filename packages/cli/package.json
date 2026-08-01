@@ -1,0 +1,46 @@
+{
+  "name": "@ackrate/cli",
+  "version": "0.1.7",
+  "description": "ackrate command-line tools for contract-enforced agent payments on Stellar.",
+  "keywords": [
+    "stellar",
+    "soroban",
+    "ackrate",
+    "agent-payments",
+    "x402",
+    "ap2",
+    "mandate",
+    "cli"
+  ],
+  "type": "module",
+  "bin": {
+    "ackrate": "dist/ackrate-cli.bundle.mjs"
+  },
+  "files": [
+    "dist/ackrate-cli.bundle.mjs",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "node --import tsx --test src/version.test.ts src/settlement-store.test.ts src/payment-failure.test.ts",
+    "start": "tsx src/index.ts",
+    "prepack": "npm --prefix ../.. run cli:bundle"
+  },
+  "dependencies": {
+    "@stellar/stellar-sdk": "^14.5.0"
+  },
+  "devDependencies": {
+    "@ackrate/core": "^0.3.1",
+    "@ackrate/stellar": "^0.2.2",
+    "commander": "^12.1.0"
+  },
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/reapp-protocol/ackrate-research-arena.git",
+    "directory": "packages/cli"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

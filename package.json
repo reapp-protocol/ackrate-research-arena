@@ -2,25 +2,46 @@
   "name": "ackrate-research-arena",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "workspaces": [
+    "packages/*"
+  ],
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "eslint"
+    "dev": "tsx watch src/server.ts",
+    "build": "npm run build:packages && tsc -p tsconfig.json",
+    "build:packages": "npm run build -w @ackrate/stellar && npm run build -w @ackrate/core && npm run build -w @ackrate/ap2 && npm run build -w @ackrate/express-middleware && npm run build -w @ackrate/cli",
+    "cli:bundle": "esbuild packages/cli/src/index.ts --bundle --platform=node --format=esm --target=node20 --external:@stellar/stellar-sdk --banner:js=\"import{createRequire as __cr}from'module';const require=__cr(import.meta.url);\" --outfile=packages/cli/dist/ackrate-cli.bundle.mjs",
+    "start": "node dist/server.js",
+    "lint": "tsc -p tsconfig.json --noEmit",
+    "typecheck": "tsc -p tsconfig.json --noEmit && npm run build:packages",
+    "test": "npm run test:app && npm run test:packages",
+    "test:app": "node --import tsx --test src/app.test.ts",
+    "test:packages": "npm test -w @ackrate/stellar && npm test -w @ackrate/core && npm test -w @ackrate/ap2 && npm test -w @ackrate/express-middleware && npm test -w @ackrate/cli"
   },
   "dependencies": {
-    "next": "16.2.12",
-    "react": "19.2.4",
-    "react-dom": "19.2.4"
+    "@ackrate/ap2": "^0.3.0",
+    "@ackrate/core": "^0.3.1",
+    "@ackrate/express-middleware": "^0.2.2",
+    "@ackrate/stellar": "^0.2.2",
+    "@anthropic-ai/sdk": "^0.115.0",
+    "@stellar/stellar-sdk": "^14.6.1",
+    "cors": "^2.8.5",
+    "dotenv": "^17.0.0",
+    "express": "^5.2.1",
+    "openai": "^7.3.0",
+    "postgres": "^3.4.9",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
-    "@tailwindcss/postcss": "^4",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
     "@types/node": "^20",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
+    "esbuild": "^0.25.0",
     "eslint": "^9",
-    "eslint-config-next": "16.2.12",
-    "tailwindcss": "^4",
+    "tsx": "^4.20.0",
     "typescript": "^5"
   }
 }

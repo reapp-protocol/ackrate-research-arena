@@ -1,0 +1,42 @@
+{
+  "name": "@ackrate/ap2",
+  "version": "0.3.0",
+  "description": "Signed AP2 mandate validation and bridging for ackrate contract-enforced Stellar payments.",
+  "keywords": [
+    "ap2",
+    "stellar",
+    "soroban",
+    "ackrate",
+    "intent-mandate",
+    "agent-payments",
+    "ai-agents"
+  ],
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "node --import tsx --test src/index.test.ts src/validator.test.ts"
+  },
+  "dependencies": {
+    "@ackrate/core": "^0.3.1",
+    "@stellar/stellar-sdk": "^14.5.0",
+    "buffer": "6.0.3"
+  },
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/reapp-protocol/ackrate-research-arena.git",
+    "directory": "packages/ap2"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
