@@ -28,8 +28,10 @@ Agentic Commerce Hackathon project.
 ## technical scope
 
 - Express 5, TypeScript, REST, and OpenAPI.
-- Railway is the only production infrastructure target.
-- Railway Postgres is the persistent database target.
+- Railway is the only application-hosting target; Supabase is the only
+  persistent-database target.
+- Supabase Postgres is the persistent database target; the Express API remains
+  on Railway and connects through a server-only `DATABASE_URL`.
 - OpenAI powers research and semantic evaluation; synthesis is deterministic.
 - Prava is the transaction and budget-authorization layer.
 - Secrets stay server-side and must never be committed, logged, or placed in

@@ -10,7 +10,7 @@ portfolio inside the budget is purchased; Prava settles; only winners ship.
 ```mermaid
 flowchart LR
     FE["Frontend\nFE team"] -->|"REST / JSON"| API["Express API\nRailway"]
-    API --> DB[("Railway Postgres")]
+    API --> DB[("Supabase Postgres")]
     API --> ACK["Ackrate SDK\nAP2 fingerprint"]
     API --> OA["OpenAI\nresearch + web search"]
     API --> AN["Anthropic\nindependent research"]
@@ -169,13 +169,20 @@ live, so the frontend explicitly refreshes payment state.
 
 ## persistence
 
-`src/lib/store.ts` has two modes:
+`src/lib/store.ts` has three explicit modes:
 
 - local: process-global memory, zero setup;
-- Railway: PostgreSQL when `DATABASE_URL` exists.
+- generic PostgreSQL: JSON arena persistence for compatibility;
+- Railway + Supabase: PostgreSQL when `DATABASE_URL` exists and
+  `DATABASE_PROVIDER=supabase` enables normalized marketplace audit records.
 
-The database stores searchable lifecycle columns and a versionable JSON payload.
-Production should normalize payments and evaluations and encrypt private fields.
+The database stores a versionable arena payload plus normalized agents, public
+wallet addresses, criteria, participants, submissions, ELO evaluations,
+payments, settlements, and reputation events. Losing report bodies are removed
+from the normalized submission ledger at settlement; their scores and counts
+remain auditable. Browser roles have no table policies, so all access stays
+behind the Express API. Wallet private keys, card data, and Prava one-time
+credentials are forbidden from persistence.
 
 ## Railway topology
 
@@ -184,9 +191,12 @@ Railway project
 ├── ackrate-api
 │   ├── build: npm run build
 │   ├── start: npm start
-│   └── health: /healthz
-└── Postgres
-    └── DATABASE_URL injected into ackrate-api
+│   ├── health: /healthz
+│   └── DATABASE_URL = Supabase Session pooler URI
+
+Supabase project
+└── PostgreSQL
+    └── schema: supabase/schema.sql
 
 Frontend
 └── VITE_ARENA_API_URL=https://ackrate-research-arena-production.up.railway.app
@@ -206,12 +216,13 @@ repository revision or an obsolete automatic-monorepo import is being used.
 | `APP_URL` | optional | Reserved public API URL metadata; not used for request routing |
 | `FRONTEND_URL` | yes | Frontend URL |
 | `CORS_ORIGINS` | yes | Ackrate domain, `www`, and Railway frontend origins |
-| `DATABASE_URL` | yes | Railway Postgres |
+| `DATABASE_PROVIDER=supabase` | yes | Enables normalized Supabase persistence |
+| `DATABASE_URL` | yes | Server-only Supabase Session pooler URI |
 | `DEMO_MODE=false` | final demo | No silent payment fallback |
 | `OPENAI_API_KEY` | final demo | Server only |
 | `OPENAI_MODEL` | recommended | Defaults to `gpt-5-mini` |
 | `ANTHROPIC_API_KEY` | recommended | Server only |
-| `ANTHROPIC_MODEL` | recommended | Model ID |
+| `ANTHROPIC_MODEL=claude-sonnet-4-5-20250929` | yes | Pinned Anthropic researcher |
 | `PRAVA_API_BASE_URL` | yes | Sandbox host only |
 | `PRAVA_SECRET_KEY` | yes | `sk_test_*`, server only |
 | `PRAVA_PUBLISHABLE_KEY` | optional | Embedded SDK only |
@@ -245,7 +256,7 @@ src/
     ├── elo.ts             judging and allocation
     ├── fingerprint.ts     Ackrate AP2 binding
     ├── prava.ts           mandate, charge, report
-    ├── store.ts           memory/Postgres persistence
+    ├── store.ts           memory/Postgres/Supabase persistence
     └── types.ts           domain types
 ```
 

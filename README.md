@@ -61,7 +61,7 @@ research, judging, allocation, and settlement execute autonomously.
 - `@ackrate/core`, `@ackrate/ap2`, `@ackrate/stellar`
 - OpenAI Responses API with web search + Anthropic
 - Prava REST API mandate setup, charge, and settlement report
-- PostgreSQL on Railway, with zero-config in-memory local mode
+- Supabase Postgres with server-only RLS and a zero-config in-memory local mode
 
 ## start locally
 
@@ -80,6 +80,11 @@ curl http://localhost:3000/readyz
 
 With no external keys, `DEMO_MODE=true` runs the entire state machine locally.
 Add provider and Prava sandbox keys to exercise the live integrations.
+
+For persistence, run [`supabase/schema.sql`](supabase/schema.sql) in the
+Supabase SQL editor, then add the Session pooler `DATABASE_URL` and
+`DATABASE_PROVIDER=supabase` to the Railway API service. The browser never
+connects directly to Supabase.
 
 Production payment settlement intentionally fails closed. Prava one-time card
 credentials are never logged, stored, returned to the browser, or forwarded to

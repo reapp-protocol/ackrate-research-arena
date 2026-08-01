@@ -41,6 +41,156 @@ async function ensureDatabase() {
   await globalThis.__ackrateDatabaseReady;
 }
 
+function useSupabaseSchema() {
+  return process.env.DATABASE_PROVIDER?.trim().toLowerCase() === "supabase";
+}
+
+async function syncSupabaseArena(arena: Arena) {
+  const sql = getDatabase();
+  if (!sql || !useSupabaseSchema()) return;
+
+  await sql.begin(async (transaction) => {
+    await transaction`
+      UPDATE arenas SET
+        buyer_id = ${arena.buyerId},
+        topic_public = ${arena.topicPublic},
+        topic_private = ${arena.topicPrivate || null},
+        topic_visibility = ${arena.topicVisibility},
+        minimum_global_elo = ${arena.qualification.minimumGlobalElo},
+        qualified_agent_count = ${arena.qualification.qualifiedAgentCount},
+        budget = ${arena.budget},
+        currency = ${arena.currency},
+        fingerprint = ${transaction.json(arena.fingerprint)}
+      WHERE id = ${arena.id}
+    `;
+
+    for (const criterion of arena.criteria) {
+      await transaction`
+        INSERT INTO arena_criteria (
+          arena_id, criterion_id, label, description, weight, visibility
+        ) VALUES (
+          ${arena.id}, ${criterion.id}, ${criterion.label}, ${criterion.description},
+          ${criterion.weight}, ${criterion.visibility}
+        )
+        ON CONFLICT (arena_id, criterion_id) DO UPDATE SET
+          label = EXCLUDED.label,
+          description = EXCLUDED.description,
+          weight = EXCLUDED.weight,
+          visibility = EXCLUDED.visibility
+      `;
+    }
+
+    await transaction`
+      INSERT INTO payments (
+        arena_id, mode, status, authorized_budget, settlement_amount, currency,
+        session_id, mandate_id, transaction_id, order_id, provider_response_id,
+        error_code
+      ) VALUES (
+        ${arena.id}, ${arena.payment.mode}, ${arena.payment.status}, ${arena.budget},
+        ${arena.finalBundle?.totalPrice ?? null}, ${arena.currency},
+        ${arena.payment.sessionId ?? null}, ${arena.payment.mandateId ?? null},
+        ${arena.payment.transactionId ?? null}, ${arena.payment.orderId ?? null},
+        ${arena.payment.responseId ?? null}, ${arena.payment.error ?? null}
+      )
+      ON CONFLICT (arena_id) DO UPDATE SET
+        mode = EXCLUDED.mode,
+        status = EXCLUDED.status,
+        authorized_budget = EXCLUDED.authorized_budget,
+        settlement_amount = EXCLUDED.settlement_amount,
+        currency = EXCLUDED.currency,
+        session_id = EXCLUDED.session_id,
+        mandate_id = EXCLUDED.mandate_id,
+        transaction_id = EXCLUDED.transaction_id,
+        order_id = EXCLUDED.order_id,
+        provider_response_id = EXCLUDED.provider_response_id,
+        error_code = EXCLUDED.error_code,
+        updated_at = NOW()
+    `;
+
+    for (const submission of arena.submissions) {
+      await transaction`
+        INSERT INTO arena_participants (
+          arena_id, agent_id, qualification_elo, qualified,
+          private_context_disclosed, submitted_at
+        ) VALUES (
+          ${arena.id}, ${submission.agentId}, ${submission.globalElo}, TRUE,
+          ${arena.topicVisibility === "gated"}, ${arena.updatedAt}
+        )
+        ON CONFLICT (arena_id, agent_id) DO UPDATE SET
+          qualification_elo = EXCLUDED.qualification_elo,
+          qualified = EXCLUDED.qualified,
+          private_context_disclosed = EXCLUDED.private_context_disclosed,
+          submitted_at = EXCLUDED.submitted_at
+      `;
+
+      const sourceCount = new Set(submission.report.findings.map((finding) => finding.sourceUrl)).size;
+      const discarded = arena.status === "complete" && !submission.isWinner;
+      await transaction`
+        INSERT INTO arena_submissions (
+          id, arena_id, agent_id, provider, bid_amount, global_elo, arena_elo,
+          is_winner, disposition, report, finding_count, source_count,
+          submitted_at, discarded_at
+        ) VALUES (
+          ${submission.id}, ${arena.id}, ${submission.agentId}, ${submission.provider},
+          ${submission.bidAmount}, ${submission.globalElo}, ${submission.elo},
+          ${submission.isWinner},
+          ${discarded ? "discarded" : submission.isWinner ? "winner" : "submitted"},
+          ${discarded ? null : transaction.json(submission.report)},
+          ${submission.report.findings.length}, ${sourceCount}, ${arena.updatedAt},
+          ${discarded ? arena.updatedAt : null}
+        )
+        ON CONFLICT (id) DO UPDATE SET
+          bid_amount = EXCLUDED.bid_amount,
+          global_elo = EXCLUDED.global_elo,
+          arena_elo = EXCLUDED.arena_elo,
+          is_winner = EXCLUDED.is_winner,
+          disposition = EXCLUDED.disposition,
+          report = EXCLUDED.report,
+          finding_count = EXCLUDED.finding_count,
+          source_count = EXCLUDED.source_count,
+          discarded_at = EXCLUDED.discarded_at,
+          updated_at = NOW()
+      `;
+    }
+
+    for (const evaluation of arena.evaluations) {
+      await transaction`
+        INSERT INTO arena_evaluations (
+          id, arena_id, criterion_id, left_submission_id,
+          right_submission_id, winner_submission_id, rationale
+        ) VALUES (
+          ${evaluation.id}, ${arena.id}, ${evaluation.criterionId},
+          ${evaluation.leftSubmissionId}, ${evaluation.rightSubmissionId},
+          ${evaluation.winnerSubmissionId}, ${evaluation.rationale}
+        )
+        ON CONFLICT (id) DO UPDATE SET
+          winner_submission_id = EXCLUDED.winner_submission_id,
+          rationale = EXCLUDED.rationale
+      `;
+    }
+
+    if (arena.status === "complete" && arena.finalBundle) {
+      for (const winner of arena.submissions.filter((submission) => submission.isWinner)) {
+        await transaction`
+          INSERT INTO settlements (
+            arena_id, submission_id, agent_id, amount, currency, status,
+            prava_transaction_id
+          ) VALUES (
+            ${arena.id}, ${winner.id}, ${winner.agentId}, ${winner.bidAmount},
+            ${arena.currency}, 'completed', ${arena.payment.transactionId ?? null}
+          )
+          ON CONFLICT (arena_id, submission_id) DO UPDATE SET
+            amount = EXCLUDED.amount,
+            currency = EXCLUDED.currency,
+            status = EXCLUDED.status,
+            prava_transaction_id = EXCLUDED.prava_transaction_id,
+            updated_at = NOW()
+        `;
+      }
+    }
+  });
+}
+
 export async function saveArena(arena: Arena): Promise<Arena> {
   memory.set(arena.id, structuredClone(arena));
   const sql = getDatabase();
@@ -64,6 +214,7 @@ export async function saveArena(arena: Arena): Promise<Arena> {
         payload = EXCLUDED.payload,
         updated_at = EXCLUDED.updated_at
     `;
+    await syncSupabaseArena(arena);
   }
   return arena;
 }
@@ -96,6 +247,7 @@ export async function listArenas(limit = 12): Promise<Arena[]> {
     .map((arena) => structuredClone(arena));
 }
 
-export function storageMode(): "postgres" | "memory" {
-  return process.env.DATABASE_URL ? "postgres" : "memory";
+export function storageMode(): "supabase" | "postgres" | "memory" {
+  if (!process.env.DATABASE_URL) return "memory";
+  return useSupabaseSchema() ? "supabase" : "postgres";
 }
