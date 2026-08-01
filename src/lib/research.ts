@@ -3,6 +3,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import OpenAI from "openai";
 import { z } from "zod";
 import { applyEloEvaluations, runBlindElo, selectWinningPortfolio } from "./elo.js";
+import { runWithProviderFailover, type ModelProvider } from "./orchestrator.js";
 import type {
   Arena,
   ArenaEvaluation,
@@ -86,7 +87,7 @@ const judgeJsonSchema = {
 type AgentDefinition = {
   id: string;
   name: string;
-  provider: "openai" | "anthropic";
+  provider: ModelProvider;
   angle: string;
   bidShare: number;
   globalElo: number;
@@ -145,8 +146,11 @@ function parseJson(text: string): unknown {
   return JSON.parse(stripped);
 }
 
-function providerErrorMessage(error: unknown) {
-  return error instanceof Error ? error.message : "unknown provider error";
+function availableProviders(): Record<ModelProvider, boolean> {
+  return {
+    openai: Boolean(process.env.OPENAI_API_KEY || process.env.OPEN_API_KEY),
+    anthropic: Boolean(process.env.ANTHROPIC_API_KEY),
+  };
 }
 
 async function researchWithOpenAI(arena: Arena, agent: AgentDefinition): Promise<ResearchReport> {
@@ -186,21 +190,20 @@ async function researchWithAnthropic(arena: Arena, agent: AgentDefinition): Prom
 
 async function runLiveAgent(arena: Arena, agent: AgentDefinition): Promise<{
   report: ResearchReport;
-  provider: "openai" | "anthropic";
+  provider: ModelProvider;
 }> {
-  if (agent.provider === "anthropic") {
-    return { report: await researchWithAnthropic(arena, agent), provider: "anthropic" };
-  }
-
-  try {
-    return { report: await researchWithOpenAI(arena, agent), provider: "openai" };
-  } catch (error) {
-    if (!process.env.ANTHROPIC_API_KEY) throw error;
-    console.warn(
-      `[research] OpenAI failed for ${agent.id}; retrying with Anthropic: ${providerErrorMessage(error)}`,
-    );
-    return { report: await researchWithAnthropic(arena, agent), provider: "anthropic" };
-  }
+  const result = await runWithProviderFailover({
+    operation: `research agent ${agent.id}`,
+    preferred: agent.provider,
+    available: availableProviders(),
+    execute: (provider) => provider === "openai"
+      ? researchWithOpenAI(arena, agent)
+      : researchWithAnthropic(arena, agent),
+    onFailover: (attempt, next) => {
+      console.warn(`[research] ${attempt.provider} failed for ${agent.id}; trying ${next}: ${attempt.message}`);
+    },
+  });
+  return { report: result.value, provider: result.provider };
 }
 
 function demoReport(arena: Arena, agent: AgentDefinition): ResearchReport {
@@ -328,13 +331,21 @@ async function judgeWithAnthropic(
 }
 
 async function runSemanticJudge(arena: Arena, submissions: ArenaSubmission[]) {
-  try {
-    return await judgeWithOpenAI(arena, submissions);
-  } catch (error) {
-    if (!process.env.ANTHROPIC_API_KEY) throw error;
-    console.warn(`[judge] OpenAI failed; retrying with Anthropic: ${providerErrorMessage(error)}`);
-    return judgeWithAnthropic(arena, submissions);
-  }
+  const preferred: ModelProvider = process.env.AI_JUDGE_PROVIDER === "anthropic"
+    ? "anthropic"
+    : "openai";
+  const result = await runWithProviderFailover({
+    operation: "blind semantic judge",
+    preferred,
+    available: availableProviders(),
+    execute: (provider) => provider === "openai"
+      ? judgeWithOpenAI(arena, submissions)
+      : judgeWithAnthropic(arena, submissions),
+    onFailover: (attempt, next) => {
+      console.warn(`[judge] ${attempt.provider} failed; trying ${next}: ${attempt.message}`);
+    },
+  });
+  return result.value;
 }
 
 function synthesize(arena: Arena, winners: ArenaSubmission[]): FinalBundle {
@@ -391,9 +402,10 @@ export async function runResearchArena(arena: Arena): Promise<Pick<Arena, "submi
 }
 
 export function providerMode() {
+  const providers = availableProviders();
   return {
-    openai: Boolean(process.env.OPENAI_API_KEY || process.env.OPEN_API_KEY),
-    anthropic: Boolean(process.env.ANTHROPIC_API_KEY),
-    semanticJudge: Boolean(process.env.OPENAI_API_KEY || process.env.OPEN_API_KEY || process.env.ANTHROPIC_API_KEY),
+    ...providers,
+    semanticJudge: providers.openai || providers.anthropic,
+    failover: providers.openai && providers.anthropic,
   };
 }

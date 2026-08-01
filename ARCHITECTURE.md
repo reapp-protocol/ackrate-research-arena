@@ -99,11 +99,15 @@ row-level authorization, encrypted fields, and retention controls.
 
 ### judging and allocation
 
-For each criterion, the live OpenAI judge compares every pair of anonymized
+For each criterion, the live semantic judge compares every pair of anonymized
 reports without price, agent identity, or global ELO. ELO updates produce an
-arena score. Explicit `DEMO_MODE=true` uses deterministic local reports and an
-evidence-quality judge. `DEMO_MODE=false` fails closed if any research provider
-or the semantic judge fails; it never relabels fallback content as a live run.
+arena score. OpenAI and Anthropic are connected through one bounded
+orchestration layer: the preferred provider is attempted once and, if it fails,
+the alternate is attempted once. The actual provider is recorded with each
+submission. There is no infinite retry loop and no substitution of demo data.
+If both live providers fail, the arena fails closed before allocation and its
+active mandate can be retried after recovery. Explicit `DEMO_MODE=true` uses
+deterministic local reports and an evidence-quality judge.
 Winner selection exhaustively evaluates all non-empty portfolios:
 
 ```text

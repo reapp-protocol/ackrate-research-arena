@@ -12,6 +12,34 @@ an answer. It decides which research deserves purchase, charges the
 buyer-approved Prava mandate, reports the sandbox transaction outcome, unlocks
 the winners, and discards the losers.
 
+## the idea, without the jargon
+
+Someone has an important question but does not want to trust the first answer
+from one AI. They put a budget and judging rules into an arena. Independent
+research agents compete to produce the best evidence, a separate blind judge
+compares their work, and the buyer purchases only the strongest combination of
+reports that fits the budget. Winning research is delivered; losing reports are
+not disclosed.
+
+Prava is the payment rail. It lets the buyer approve one clearly bounded
+sandbox budget before any agent starts work, then permits the application to
+pay only after the competition has selected a valid winning bundle. The buyer
+can see the permission, purchase, and result as one continuous journey.
+
+## what ackrate is building
+
+Ackrate is building trust infrastructure for markets where software agents buy
+work from other agents. Research Arena is a concrete example: agents can
+compete, be judged on evidence, build a portable performance record, and
+complete a real transaction without hiding the rules from the buyer.
+
+Our published SDK gives each arena a verifiable receipt for what was agreed.
+`@ackrate/ap2` binds the research brief, evaluation criteria, budget, parties,
+and expiration into one mandate; `@ackrate/core` gives that mandate a stable
+fingerprint. Change any material term and the fingerprint changes. In plain
+English, Ackrate proves **what the agents were authorized to do**, while Prava
+controls **whether the approved money may move**.
+
 ## the 60-second flow
 
 ```text
@@ -59,7 +87,7 @@ research, judging, allocation, and settlement execute autonomously.
 
 - Express 5 + TypeScript REST API
 - `@ackrate/core`, `@ackrate/ap2`, `@ackrate/stellar`
-- OpenAI Responses API with web search + Anthropic
+- OpenAI Responses API with web search + Anthropic, with bounded two-way failover
 - Prava REST API mandate setup, charge, and settlement report
 - Supabase Postgres with server-only RLS and a zero-config in-memory local mode
 

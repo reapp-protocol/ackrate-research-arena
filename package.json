@@ -13,8 +13,9 @@
     "gate": "npm run lint && npm run build && npm test && npm audit --omit=dev --audit-level=high",
     "lint": "tsc -p tsconfig.json --noEmit",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "npm run test:app",
-    "test:app": "node --import tsx --test src/app.test.ts"
+    "test": "node --import tsx --test src/app.test.ts src/lib/orchestrator.test.ts",
+    "test:app": "node --import tsx --test src/app.test.ts",
+    "test:orchestrator": "node --import tsx --test src/lib/orchestrator.test.ts"
   },
   "dependencies": {
     "@ackrate/ap2": "^0.3.0",
