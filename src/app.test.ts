@@ -144,6 +144,9 @@ test("live mode fails closed instead of substituting demo research or judging", 
   const failed = await getArenaById(arena.id);
   assert.equal(failed.status, "failed");
   assert.equal(failed.submissions.length, 0);
+  assert.equal(failed.failure?.code, "MODEL_PROVIDER_NOT_CONFIGURED");
+  assert.equal(failed.failure?.stage, "configuration");
+  assert.deepEqual(failed.failure?.providers, []);
 });
 
 test("readiness identifies every missing live dependency without exposing values", async (context) => {

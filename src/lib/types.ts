@@ -100,6 +100,14 @@ export type StellarAnchorState = {
   error?: string;
 };
 
+export type ArenaFailure = {
+  code: "MODEL_PROVIDER_NOT_CONFIGURED" | "MODEL_PROVIDERS_EXHAUSTED" | "ARENA_EXECUTION_FAILED";
+  stage: "configuration" | "research" | "judging" | "allocation";
+  message: string;
+  providers: Array<"openai" | "anthropic">;
+  failedAt: string;
+};
+
 export type Arena = {
   id: string;
   slug: string;
@@ -122,6 +130,7 @@ export type Arena = {
   submissions: ArenaSubmission[];
   evaluations: ArenaEvaluation[];
   finalBundle?: FinalBundle;
+  failure?: ArenaFailure;
   createdAt: string;
   updatedAt: string;
 };

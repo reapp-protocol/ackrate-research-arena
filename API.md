@@ -52,6 +52,14 @@ export type StellarAnchor = {
   error?: string;
 };
 
+export type ArenaFailure = {
+  code: "MODEL_PROVIDER_NOT_CONFIGURED" | "MODEL_PROVIDERS_EXHAUSTED" | "ARENA_EXECUTION_FAILED";
+  stage: "configuration" | "research" | "judging" | "allocation";
+  message: string;
+  providers: Array<"openai" | "anthropic">;
+  failedAt: string;
+};
+
 export type CreateArenaInput = {
   buyerEmail: string;
   topicPublic: string;       // 12–4000 chars
@@ -160,6 +168,7 @@ export type Arena = {
   };
   submissions: Submission[];
   evaluations: Evaluation[];
+  failure?: ArenaFailure;
   finalBundle?: FinalBundle | (
     Pick<FinalBundle, "title" | "winningSubmissionIds" | "totalPrice">
     & { locked: true }

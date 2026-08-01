@@ -10,6 +10,7 @@ import {
   initialStellarAnchor,
   registerArenaMandateOnTestnet,
 } from "./stellar-anchor.js";
+import { ProviderOrchestrationError } from "./orchestrator.js";
 import { getArena, listArenas, saveArena } from "./store.js";
 import type { Arena, CreateArenaInput, Criterion } from "./types.js";
 
@@ -153,10 +154,18 @@ export async function runArena(id: string) {
     arena.submissions = [];
     arena.evaluations = [];
     arena.finalBundle = undefined;
+    arena.failure = undefined;
   }
   if (!getDemoMode() && !providerMode().semanticJudge) {
     arena.status = "failed";
     arena.updatedAt = now();
+    arena.failure = {
+      code: "MODEL_PROVIDER_NOT_CONFIGURED",
+      stage: "configuration",
+      message: "Configure OpenAI or Anthropic before retrying the arena.",
+      providers: [],
+      failedAt: arena.updatedAt,
+    };
     await saveArena(arena);
     throw new ArenaServiceError(
       "A model provider is not configured for the live arena; add OpenAI or Anthropic",
@@ -181,6 +190,23 @@ export async function runArena(id: string) {
   } catch (error) {
     arena.status = "failed";
     arena.updatedAt = now();
+    if (error instanceof ProviderOrchestrationError) {
+      arena.failure = {
+        code: "MODEL_PROVIDERS_EXHAUSTED",
+        stage: error.operation.startsWith("research agent") ? "research" : "judging",
+        message: "Every configured model provider failed. Check provider quota and retry the funded arena.",
+        providers: [...new Set(error.attempts.map((attempt) => attempt.provider))],
+        failedAt: arena.updatedAt,
+      };
+    } else {
+      arena.failure = {
+        code: "ARENA_EXECUTION_FAILED",
+        stage: arena.submissions.length ? "allocation" : "research",
+        message: "The arena stopped before allocation. Nothing was settled; retry after checking the service logs.",
+        providers: [],
+        failedAt: arena.updatedAt,
+      };
+    }
     await saveArena(arena);
     throw error;
   }

@@ -140,9 +140,12 @@ Buttons: **Copy answer**, **Open sources**, **Export evidence bundle**, and
 
 ### 7. `failed`
 
-Show the API error `message` and a copyable `requestId`. Never advance the UI
-optimistically. A settlement failure remains `ready_to_settle` and should show
-**Retry purchase** without rerunning research.
+Show `failure.message`, `failure.stage`, and any provider names in
+`failure.providers`. This receipt is intentionally safe for the UI: it never
+contains model responses, prompts, keys, private criteria, or losing research.
+For a funded arena, show **Retry research** and call the same `/run` endpoint.
+Never advance the UI optimistically. A settlement failure remains
+`ready_to_settle` and should show **Retry purchase** without rerunning research.
 
 ## exact abstract-to-UI mapping
 
@@ -173,6 +176,7 @@ optimistically. A settlement failure remains `ready_to_settle` and should show
 - `stellarAnchor.status === "confirmed"` exposes a valid Stellar Expert transaction link.
 - Refreshing the arena page reconstructs the UI from `GET /v1/arenas/:id`.
 - API errors show their message and copyable request ID.
+- Failed live runs show the privacy-safe `failure` receipt and a retry action.
 
 ## 90-second judge script
 
