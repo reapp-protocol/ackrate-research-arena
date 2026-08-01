@@ -1,7 +1,9 @@
 # npm package provenance
 
-The `@ackrate/*` packages in this repository are a new npm distribution and
-public brand created for the hackathon.
+The published `@ackrate/*` packages are a new npm distribution and public brand
+created for the hackathon. This application consumes the release artifacts from
+npm; their source is intentionally not a Railway workspace or deployable
+service.
 
 Their starting implementation was imported read-only from frozen REAPP T2
 `main` at commit `3dc050a32fb86e9e6ef6e4e223cfbb45e07cb6f5`. The source repository was

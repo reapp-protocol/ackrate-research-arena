@@ -122,5 +122,8 @@ export function selectWinningPortfolio(
     }
   }
 
-  return best.length > 0 ? best : [submissions[0]!];
+  if (best.length === 0) {
+    throw new Error("No valid research portfolio fits the authorized budget");
+  }
+  return best;
 }

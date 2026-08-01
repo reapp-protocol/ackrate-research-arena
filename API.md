@@ -148,7 +148,7 @@ export type Arena = {
   submissions: Submission[];
   evaluations: Evaluation[];
   finalBundle?: FinalBundle | (
-    Pick<FinalBundle, "title" | "executiveSummary" | "winningSubmissionIds" | "totalPrice">
+    Pick<FinalBundle, "title" | "winningSubmissionIds" | "totalPrice">
     & { locked: true }
   );
   createdAt: string;
@@ -254,7 +254,7 @@ discarded; only its competition metadata remains.
 ## fetch helper
 
 ```ts
-const API_URL = process.env.NEXT_PUBLIC_ARENA_API_URL!;
+const API_URL = import.meta.env.VITE_ARENA_API_URL;
 
 export async function arenaRequest<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(`${API_URL}${path}`, {

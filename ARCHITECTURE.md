@@ -101,7 +101,9 @@ row-level authorization, encrypted fields, and retention controls.
 
 For each criterion, the live OpenAI judge compares every pair of anonymized
 reports without price, agent identity, or global ELO. ELO updates produce an
-arena score. Offline demo mode uses a deterministic evidence-quality fallback.
+arena score. Explicit `DEMO_MODE=true` uses deterministic local reports and an
+evidence-quality judge. `DEMO_MODE=false` fails closed if any research provider
+or the semantic judge fails; it never relabels fallback content as a live run.
 Winner selection exhaustively evaluates all non-empty portfolios:
 
 ```text
@@ -187,8 +189,13 @@ Railway project
     └── DATABASE_URL injected into ackrate-api
 
 Frontend
-└── NEXT_PUBLIC_ARENA_API_URL=https://<ackrate-api>.up.railway.app
+└── VITE_ARENA_API_URL=https://<ackrate-api>.up.railway.app
 ```
+
+The repository root is the only deployable Node package. Ackrate SDK releases
+are installed from npm and are not Railway services. If Railway ever displays
+`@ackrate/core`, `@ackrate/ap2`, or another SDK package as a service, the wrong
+repository revision or an obsolete automatic-monorepo import is being used.
 
 ### Railway variables
 
@@ -196,7 +203,7 @@ Frontend
 | --- | --- | --- |
 | `NODE_ENV=production` | yes | Runtime mode |
 | `PORT` | automatic | Railway injects it |
-| `APP_URL` | yes | Railway API URL |
+| `APP_URL` | optional | Reserved public API URL metadata; not used for request routing |
 | `FRONTEND_URL` | yes | Frontend URL |
 | `CORS_ORIGINS` | yes | Ackrate domain, `www`, and Railway frontend origins |
 | `DATABASE_URL` | yes | Railway Postgres |
@@ -211,7 +218,7 @@ Frontend
 | `PRAVA_MERCHANT_URL` | yes | Public Ackrate URL |
 | `PRAVA_MERCHANT_COUNTRY` | yes | ISO-2 country |
 | `PRAVA_MERCHANT_CATEGORY_CODE` | yes | Research services MCC |
-| `PRAVA_CALLBACK_URL` | recommended | HTTPS frontend return route |
+| `PRAVA_CALLBACK_URL` | optional | Leave unset to generate the arena-specific frontend return route |
 
 Prefer `OPENAI_API_KEY`; `OPEN_API_KEY` is a compatibility alias.
 

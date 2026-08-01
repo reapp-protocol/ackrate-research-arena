@@ -97,17 +97,16 @@ before any production enablement.
 | `POST` | `/v1/arenas/:id/settle` | Charge, report, and unlock winners |
 | `GET` | `/v1/arenas/:id` | Read the current frontend-safe state |
 
-Frontend developers should start with [`USERJOURNEY.md`](USERJOURNEY.md) and
-[`API.md`](API.md). System and Railway details are in
+Frontend developers should use [`FRONTEND_HANDOFF.md`](FRONTEND_HANDOFF.md) as
+the implementation contract, then [`API.md`](API.md) for payloads.
+[`USERJOURNEY.md`](USERJOURNEY.md) explains the product rationale. System and Railway details are in
 [`ARCHITECTURE.md`](ARCHITECTURE.md). Machine-readable docs are served at
 `/openapi.json`.
 
 ## verification
 
 ```bash
-npm run lint
-npm run build
-npm test
+npm run gate
 ```
 
 ## published ackrate packages

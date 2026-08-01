@@ -78,12 +78,25 @@ export function createApp() {
 
   app.get("/readyz", (_request, response) => {
     const providers = providerMode();
-    response.json({
-      status: "ready",
+    const demoMode = process.env.DEMO_MODE !== "false";
+    const configurationErrors = demoMode ? [] : [
+      ...(!process.env.DATABASE_URL ? ["DATABASE_URL is required"] : []),
+      ...(!(process.env.OPENAI_API_KEY || process.env.OPEN_API_KEY) ? ["OPENAI_API_KEY is required"] : []),
+      ...(!process.env.ANTHROPIC_API_KEY ? ["ANTHROPIC_API_KEY is required"] : []),
+      ...(!process.env.PRAVA_SECRET_KEY ? ["PRAVA_SECRET_KEY is required"] : []),
+      ...(!process.env.FRONTEND_URL ? ["FRONTEND_URL is required"] : []),
+      ...(!process.env.CORS_ORIGINS ? ["CORS_ORIGINS is required"] : []),
+      ...((process.env.PRAVA_API_BASE_URL || "https://sandbox.api.prava.space") !== "https://sandbox.api.prava.space"
+        ? ["PRAVA_API_BASE_URL must be the Prava sandbox"]
+        : []),
+    ];
+    response.status(configurationErrors.length ? 503 : 200).json({
+      status: configurationErrors.length ? "not_ready" : "ready",
       storage: storageMode(),
-      payment: isPravaConfigured() ? "prava" : "demo",
+      payment: demoMode ? "demo" : isPravaConfigured() ? "prava" : "unconfigured",
       providers,
-      demoMode: process.env.DEMO_MODE !== "false",
+      demoMode,
+      configurationErrors,
     });
   });
 

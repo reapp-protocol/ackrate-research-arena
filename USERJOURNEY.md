@@ -106,7 +106,7 @@ Server state: `ready_to_settle`.
 Show:
 
 - each agent's name, provider, offer, ELO, and winner state;
-- report title/thesis and source count only;
+- locked report metadata and source count only;
 - evaluation count and public criteria;
 - the winning portfolio total versus budget;
 - a locked final-bundle panel.

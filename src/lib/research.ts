@@ -211,21 +211,17 @@ function demoReport(arena: Arena, agent: AgentDefinition): ResearchReport {
 }
 
 async function runAgent(arena: Arena, agent: AgentDefinition): Promise<ArenaSubmission> {
-  let report: ResearchReport;
-  let provider: ArenaSubmission["provider"] = agent.provider;
-  try {
-    report = agent.provider === "openai"
+  const demoMode = process.env.DEMO_MODE !== "false";
+  const report = demoMode
+    ? demoReport(arena, agent)
+    : agent.provider === "openai"
       ? await researchWithOpenAI(arena, agent)
       : await researchWithAnthropic(arena, agent);
-  } catch {
-    report = demoReport(arena, agent);
-    provider = "demo";
-  }
   return {
     id: randomUUID(),
     agentId: agent.id,
     agentName: agent.name,
-    provider,
+    provider: demoMode ? "demo" : agent.provider,
     bidAmount: Math.max(1, Number((arena.budget * agent.bidShare).toFixed(2))),
     globalElo: agent.globalElo,
     report,
@@ -305,12 +301,15 @@ export async function runResearchArena(arena: Arena): Promise<Pick<Arena, "submi
   }
   arena.qualification.qualifiedAgentCount = qualifiedAgents.length;
   const rawSubmissions = await Promise.all(qualifiedAgents.map((agent) => runAgent(arena, agent)));
-  let ranked: ReturnType<typeof runBlindElo>;
-  try {
-    ranked = await judgeWithOpenAI(arena, rawSubmissions);
-  } catch {
-    ranked = runBlindElo(rawSubmissions, arena.criteria);
+  const validSubmissions = rawSubmissions.filter((submission) => Number.isFinite(submission.bidAmount)
+    && submission.bidAmount > 0
+    && submission.bidAmount <= arena.budget);
+  if (validSubmissions.length < 2) {
+    throw new Error("At least two valid research bids must fit the arena budget");
   }
+  const ranked = process.env.DEMO_MODE !== "false"
+    ? runBlindElo(validSubmissions, arena.criteria)
+    : await judgeWithOpenAI(arena, validSubmissions);
   const winners = selectWinningPortfolio(ranked.submissions, arena.budget);
   const winnerIds = new Set(winners.map((winner) => winner.id));
   const submissions = ranked.submissions.map((submission) => ({

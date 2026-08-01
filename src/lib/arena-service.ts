@@ -4,7 +4,6 @@ import {
   chargeAndReportMandate,
   createBudgetMandateSession,
   findActiveMandate,
-  isPravaConfigured,
 } from "./prava.js";
 import { qualifiedAgentCount, runResearchArena } from "./research.js";
 import { getArena, listArenas, saveArena } from "./store.js";
@@ -37,7 +36,7 @@ function buyerId(email: string) {
 }
 
 function getDemoMode() {
-  return !isPravaConfigured() && process.env.DEMO_MODE !== "false";
+  return process.env.DEMO_MODE !== "false";
 }
 
 async function requireArena(id: string) {
@@ -238,8 +237,7 @@ export function toClientArena(arena: Arena, options?: { includePaymentUrl?: bool
       report: unlocked && submission.isWinner
         ? submission.report
         : {
-            title: submission.report.title,
-            thesis: submission.isWinner ? submission.report.thesis : undefined,
+            title: unlocked ? "discarded research report" : "locked research report",
             findingCount: submission.report.findings.length,
             sourceCount: new Set(submission.report.findings.map((finding) => finding.sourceUrl)).size,
             locked: !unlocked,
@@ -254,7 +252,6 @@ export function toClientArena(arena: Arena, options?: { includePaymentUrl?: bool
     }),
     finalBundle: unlocked ? arena.finalBundle : arena.finalBundle ? {
       title: arena.finalBundle.title,
-      executiveSummary: arena.finalBundle.executiveSummary,
       winningSubmissionIds: arena.finalBundle.winningSubmissionIds,
       totalPrice: arena.finalBundle.totalPrice,
       locked: true,
