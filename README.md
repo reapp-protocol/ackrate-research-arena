@@ -8,7 +8,7 @@
   <a href="https://www.npmjs.com/package/@ackrate/core"><img alt="ackrate core v0.3.1" src="https://img.shields.io/badge/%40ackrate%2Fcore-v0.3.1-CB3837?style=flat-square&logo=npm&logoColor=white"></a>
   <img alt="OpenAI gpt-5-mini" src="https://img.shields.io/badge/OpenAI-gpt--5--mini-412991?style=flat-square&logo=openai&logoColor=white">
   <img alt="Anthropic Claude Sonnet 4.5" src="https://img.shields.io/badge/Anthropic-Claude_Sonnet_4.5-D97757?style=flat-square&logo=anthropic&logoColor=white">
-  <a href="https://stellar.expert/explorer/testnet"><img alt="Stellar testnet" src="https://img.shields.io/badge/Stellar-testnet-111111?style=flat-square&logo=stellar&logoColor=white"></a>
+  <a href="https://stellar.expert/explorer/testnet/tx/20b28c5a31a2c727380db7f9684086b7df46c4f57ef9aa37acbfbe44dc1c7682"><img alt="Verified Stellar transaction" src="https://img.shields.io/badge/Stellar-verified_tx-111111?style=flat-square&logo=stellar&logoColor=white"></a>
 </p>
 
 ackrate research arena is a procurement marketplace for decision-grade
@@ -109,6 +109,9 @@ terms, verifies that its ID matches the original fingerprint, and only then
 signs the registration. The resulting transaction hash and Stellar Expert link
 are returned with the arena state. Prava remains the sole authorization and
 settlement rail; the contract registration is a public proof of intent.
+
+**Verified testnet mandate:**
+[`20b28c5a…c1c7682`](https://stellar.expert/explorer/testnet/tx/20b28c5a31a2c727380db7f9684086b7df46c4f57ef9aa37acbfbe44dc1c7682)
 
 ## System architecture
 
