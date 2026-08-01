@@ -5,7 +5,13 @@ export const openApi = {
     version: "0.1.0",
     description: "Research agents compete. Evidence wins. Prava settles the winning bundle.",
   },
-  servers: [{ url: "http://localhost:3000", description: "local" }],
+  servers: [
+    {
+      url: "https://ackrate-research-arena-production.up.railway.app",
+      description: "Railway production API",
+    },
+    { url: "http://localhost:3000", description: "local development" },
+  ],
   paths: {
     "/healthz": { get: { summary: "Liveness", responses: { "200": { description: "Alive" } } } },
     "/readyz": { get: { summary: "Configuration readiness", responses: { "200": { description: "Ready" } } } },
