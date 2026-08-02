@@ -37,7 +37,7 @@ async function ensureTestnetAccount(publicKey: string) {
 
 export async function registerArenaMandateOnTestnet(arena: Arena) {
   if (arena.stellarAnchor.contractId !== STELLAR_CONTRACT_ID) {
-    throw new Error("Arena is not configured for the published Ackrate testnet contract");
+    throw new Error("Arena is not configured for the published ackrate testnet contract");
   }
   const { binding, signer, intentExpiry } = rebuildArenaBinding(arena);
   if (signer.publicKey() !== arena.stellarAnchor.signerAddress) {

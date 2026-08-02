@@ -5,21 +5,21 @@ Agentic Commerce Hackathon project.
 
 ## hard boundary
 
-- Do not edit, commit, tag, publish, deploy, or configure any REAPP T3 or
+- Do not edit, commit, tag, publish, deploy, or configure any sibling T3 or
   milestone repository while working on this project.
 - Do not depend on an unpublished file, branch, service, or secret from another
-  REAPP repository.
+  repository.
 - Put all hackathon product code, infrastructure configuration, database
   migrations, integration code, tests, evidence, and submission documentation
   in this repository.
-- Historical REAPP work may be cited in the disclosure, but it is not the
+- Historical protocol work may be cited in the disclosure, but it is not the
   product identity. All public branding is lowercase `ackrate`.
 
 ## product identity
 
 - Product: `ackrate research arena`
 - Tagline: `research agents compete. evidence wins.`
-- Repository: `reapp-protocol/ackrate-research-arena`
+- Repository: `ackrate-research-arena`
 - Use lowercase ackrate styling in UI, documentation, metadata, transaction
   descriptions, and package names.
 - Use `budget`, `bounty`, `offer`, `submission`, and `arena`. Do not describe

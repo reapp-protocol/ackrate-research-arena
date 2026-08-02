@@ -91,7 +91,7 @@ Allow at least 210 seconds. While waiting, show three lanes:
 - Decision Architect — turns evidence into an actionable answer.
 
 Show the current stage as Researching → Validating bids → Blind judging →
-Selecting within budget. Prefix those stages with **Registering Ackrate mandate
+Selecting within budget. Prefix those stages with **Registering ackrate mandate
 on Stellar testnet**. Do not fake token streams or completion percentages.
 
 ### 4. `researching`
@@ -133,7 +133,7 @@ Show:
 - full reports for winning agents only;
 - losing-agent offer, ELO, and `discarded` status without losing report content;
 - Prava transaction ID;
-- Ackrate AP2 fingerprint.
+- ackrate AP2 fingerprint.
 
 Buttons: **Copy answer**, **Open sources**, **Export evidence bundle**, and
 **Create another arena**.
@@ -162,7 +162,7 @@ Never advance the UI optimistically. A settlement failure remains
 | Winners transmitted | Purchased reports and evidence unlock at `complete` |
 | Losers discarded | Losing metadata remains; losing research never unlocks |
 | Agent completes a transaction | Prava authorization, settlement, and transaction ID |
-| Intent is publicly verifiable | Ackrate mandate transaction on Stellar testnet |
+| Intent is publicly verifiable | ackrate mandate transaction on Stellar testnet |
 
 ## frontend acceptance gate
 
@@ -185,7 +185,7 @@ Never advance the UI optimistically. A settlement failure remains
    public criterion, one private criterion, and minimum global ELO 1200.
 2. Create the arena and point out that two of three agents qualified.
 3. Authorize the bounded budget with Prava.
-4. Run the arena, open the confirmed Ackrate mandate transaction on Stellar
+4. Run the arena, open the confirmed ackrate mandate transaction on Stellar
    Expert, then show qualified agents returning priced, cited research; the blind
    judge compares every pair against both criteria and assigns arena ELO.
 5. Show that the selected winner total is no more than $40, then purchase it.

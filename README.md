@@ -205,7 +205,7 @@ while research, judging, allocation, and settlement run autonomously.
 
 - Express 5 and TypeScript REST API
 - `@ackrate/core`, `@ackrate/ap2`, and `@ackrate/stellar`
-- Ackrate `MandateRegistry` on Stellar testnet
+- ackrate `MandateRegistry` on Stellar testnet
 - OpenAI Responses API with web search and Anthropic, using bounded two-way
   failover
 - Prava REST API for mandate setup, charge, and settlement reporting
@@ -317,13 +317,13 @@ npm run build
 
 The arena marketplace, Prava workflow, multi-agent research and judging, ELO
 allocation, Railway service, and public ackrate product are new hackathon work.
-The ackrate npm packages were mapped from frozen pre-existing REAPP T2 sources;
+The ackrate npm packages were mapped from frozen pre-existing T2 protocol sources;
 their exact provenance and compatibility boundary are documented in
 [`docs/PACKAGE_PROVENANCE.md`](docs/PACKAGE_PROVENANCE.md). T3 and milestone
 repositories are outside this repository and were not modified.
 
 ---
 
-Repository: [reapp-protocol/ackrate-research-arena](https://github.com/reapp-protocol/ackrate-research-arena)
+Repository: [ackrate research arena on GitHub](https://github.com/reapp-protocol/ackrate-research-arena)
 
 Live API: [ackrate-research-arena-production.up.railway.app](https://ackrate-research-arena-production.up.railway.app)

@@ -52,7 +52,7 @@ export const openApi = {
     },
     "/v1/arenas/{id}/anchor": {
       post: {
-        summary: "Register the approved Ackrate intent mandate on Stellar testnet",
+        summary: "Register the approved ackrate intent mandate on Stellar testnet",
         parameters: [{ $ref: "#/components/parameters/ArenaId" }],
         responses: {
           "200": { description: "Confirmed Stellar testnet transaction" },

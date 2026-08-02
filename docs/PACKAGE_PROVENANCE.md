@@ -5,7 +5,7 @@ created for the hackathon. This application consumes the release artifacts from
 npm; their source is intentionally not a Railway workspace or deployable
 service.
 
-Their starting implementation was imported read-only from frozen REAPP T2
+Their starting implementation was imported read-only from the frozen T2 protocol
 `main` at commit `3dc050a32fb86e9e6ef6e4e223cfbb45e07cb6f5`. The source repository was
 not edited, committed, tagged, published, or deployed during this migration.
 
@@ -27,6 +27,5 @@ CLI commands, and CLI state paths use lowercase `ackrate`.
 
 The deployed contract ABI, signing domains, canonical hashes, settlement
 schemes, AP2 binding versions, and protocol headers are frozen interoperability
-values. Existing `reapp-*` wire literals are intentionally unchanged. Renaming
-those values would invalidate signatures or break existing contract and client
-compatibility.
+values. Existing legacy wire literals are intentionally unchanged. Renaming
+them would invalidate signatures or break existing contract and client compatibility.

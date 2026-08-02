@@ -84,7 +84,7 @@ export function isPravaConfigured() {
 }
 
 export async function createBudgetMandateSession(arena: Arena) {
-  const merchantUrl = process.env.PRAVA_MERCHANT_URL || "https://github.com/reapp-protocol/ackrate-research-arena";
+  const merchantUrl = process.env.PRAVA_MERCHANT_URL || "https://ackratearena.xyz";
   const frontendUrl = process.env.FRONTEND_URL?.replace(/\/$/, "");
   const callbackUrl = process.env.PRAVA_CALLBACK_URL
     || (frontendUrl ? `${frontendUrl}/arena/${arena.id}?prava=return` : undefined);
@@ -151,7 +151,7 @@ export async function chargeAndReportMandate(arena: Arena, mandateId: string, am
       purchase_context: [{
         merchant_details: {
           name: "ackrate research arena",
-          url: process.env.PRAVA_MERCHANT_URL || "https://github.com/reapp-protocol/ackrate-research-arena",
+          url: process.env.PRAVA_MERCHANT_URL || "https://ackratearena.xyz",
           country_code_iso2: process.env.PRAVA_MERCHANT_COUNTRY || "US",
           category_code: process.env.PRAVA_MERCHANT_CATEGORY_CODE || "7392",
         },

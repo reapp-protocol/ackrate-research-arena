@@ -242,7 +242,7 @@ export async function anchorArena(id: string) {
   }
   if (arena.payment.status !== "active" && arena.payment.status !== "completed") {
     throw new ArenaServiceError(
-      "Approve the Prava mandate before registering the Ackrate mandate on Stellar",
+      "Approve the Prava mandate before registering the ackrate mandate on Stellar",
       409,
       "STELLAR_ANCHOR_REQUIRES_PRAVA_APPROVAL",
     );

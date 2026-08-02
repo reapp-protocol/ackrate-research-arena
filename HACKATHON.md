@@ -2,8 +2,8 @@
 
 ## repository of record
 
-`reapp-protocol/ackrate-research-arena` is the sole product, infrastructure,
-evidence, and submission repository for ackrate research arena.
+This repository is the sole product, infrastructure, evidence, and submission
+record for ackrate research arena.
 
 All work intended for judging is committed here. T3 and milestone repositories
 are frozen and outside this project's implementation scope.
@@ -24,7 +24,7 @@ are frozen and outside this project's implementation scope.
 
 ## pre-existing work
 
-The concept builds on lessons from the pre-existing REAPP research-agent
+The concept builds on lessons from pre-existing protocol research-agent
 quick-start and its work on agent budgets, paid sources, and reputation. Those
 repositories, packages, milestone branches, deployments, and on-chain systems
 predate this event and are not presented as hackathon work.

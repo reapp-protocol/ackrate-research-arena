@@ -11,7 +11,7 @@ portfolio inside the budget is purchased; Prava settles; only winners ship.
 flowchart LR
     FE["Frontend\nFE team"] -->|"REST / JSON"| API["Express API\nRailway"]
     API --> DB[("Supabase Postgres")]
-    API --> ACK["Ackrate SDK\nAP2 fingerprint"]
+    API --> ACK["ackrate SDK\nAP2 fingerprint"]
     ACK --> STELLAR["Stellar testnet\nMandateRegistry"]
     API --> OA["OpenAI\nresearch + web search"]
     API --> AN["Anthropic\nindependent research"]
@@ -22,7 +22,7 @@ flowchart LR
 ```
 
 The frontend is replaceable. The Express API, database, marketplace state,
-privacy enforcement, providers, Ackrate fingerprint, and Prava integration live
+privacy enforcement, providers, ackrate fingerprint, and Prava integration live
 in this repository.
 
 ## canonical sequence
@@ -31,7 +31,7 @@ in this repository.
 sequenceDiagram
     actor Buyer
     participant UI as Frontend
-    participant API as Ackrate API
+    participant API as ackrate API
     participant Prava
     participant Stellar as Stellar testnet
     participant Agents as Qualified agents
@@ -75,7 +75,7 @@ rerunning research: `not_started → pending_approval → active → charging �
 completed`. A failed charge returns to a retryable settlement screen.
 
 The Stellar transaction is also separate from payment state. It registers the
-approved Ackrate intent as a public audit anchor before research begins; it does
+approved ackrate intent as a public audit anchor before research begins; it does
 not transfer value. Prava remains the only payment rail in this hackathon flow.
 The server verifies the reconstructed mandate ID exactly matches the fingerprint
 before signing, pins the published testnet contract address, and persists the
@@ -129,9 +129,9 @@ subject to sum(agent offers) <= authorized budget
 With three participants there are only seven portfolios. The settlement service
 independently rechecks the selected total against the authorized budget.
 
-## Ackrate and Prava have different jobs
+## ackrate and Prava have different jobs
 
-Ackrate is the trust and intent layer:
+ackrate is the trust and intent layer:
 
 - `@ackrate/ap2` binds topic, criteria, budget, expiry, and pseudonymous parties;
 - `@ackrate/core` produces the deterministic fingerprint;
@@ -217,7 +217,7 @@ Frontend
 └── VITE_ARENA_API_URL=https://ackrate-research-arena-production.up.railway.app
 ```
 
-The repository root is the only deployable Node package. Ackrate SDK releases
+The repository root is the only deployable Node package. ackrate SDK releases
 are installed from npm and are not Railway services. If Railway ever displays
 `@ackrate/core`, `@ackrate/ap2`, or another SDK package as a service, the wrong
 repository revision or an obsolete automatic-monorepo import is being used.
@@ -230,7 +230,7 @@ repository revision or an obsolete automatic-monorepo import is being used.
 | `PORT` | automatic | Railway injects it |
 | `APP_URL` | optional | Reserved public API URL metadata; not used for request routing |
 | `FRONTEND_URL` | yes | Frontend URL |
-| `CORS_ORIGINS` | yes | Ackrate domain, `www`, and Railway frontend origins |
+| `CORS_ORIGINS` | yes | ackrate domain, `www`, and Railway frontend origins |
 | `DATABASE_PROVIDER=supabase` | yes | Enables normalized Supabase persistence |
 | `DATABASE_URL` | yes | Server-only Supabase Session pooler URI |
 | `DEMO_MODE=false` | final demo | No silent payment fallback |
@@ -241,7 +241,7 @@ repository revision or an obsolete automatic-monorepo import is being used.
 | `PRAVA_API_BASE_URL` | yes | Sandbox host only |
 | `PRAVA_SECRET_KEY` | yes | `sk_test_*`, server only |
 | `PRAVA_PUBLISHABLE_KEY` | optional | Embedded SDK only |
-| `PRAVA_MERCHANT_URL` | yes | Public Ackrate URL |
+| `PRAVA_MERCHANT_URL` | yes | Public ackrate URL |
 | `PRAVA_MERCHANT_COUNTRY` | yes | ISO-2 country |
 | `PRAVA_MERCHANT_CATEGORY_CODE` | yes | Research services MCC |
 | `PRAVA_CALLBACK_URL` | optional | Leave unset to generate the arena-specific frontend return route |
@@ -269,7 +269,7 @@ src/
     ├── arena-service.ts   state machine and redaction
     ├── research.ts        competing qualified agents
     ├── elo.ts             judging and allocation
-    ├── fingerprint.ts     Ackrate AP2 binding
+    ├── fingerprint.ts     ackrate AP2 binding
     ├── prava.ts           mandate, charge, report
     ├── store.ts           memory/Postgres/Supabase persistence
     └── types.ts           domain types
