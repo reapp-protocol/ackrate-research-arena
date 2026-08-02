@@ -86,5 +86,5 @@ test("validates one pairwise Anthropic judgment", () => {
   };
 
   assert.deepEqual(validatePairJudgeResponse(judgment), judgment);
-  assert.throws(() => validatePairJudgeResponse({ ...judgment, rationale: "too short" }));
+  assert.throws(() => validatePairJudgeResponse({ ...judgment, rationale: "bad" }));
 });

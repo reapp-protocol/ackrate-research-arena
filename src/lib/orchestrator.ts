@@ -20,7 +20,8 @@ export class ProviderOrchestrationError extends Error {
 
 function safeErrorMessage(error: unknown) {
   const message = error instanceof Error ? error.message : "unknown provider error";
-  return message.replace(/\s+/g, " ").trim().slice(0, 500);
+  const name = error instanceof Error && error.name !== "Error" ? `${error.name}: ` : "";
+  return `${name}${message}`.replace(/\s+/g, " ").trim().slice(0, 500);
 }
 
 export async function runWithProviderFailover<T>(input: {

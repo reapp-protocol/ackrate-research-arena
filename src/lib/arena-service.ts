@@ -52,7 +52,9 @@ function safeProviderFailureReason(message: string) {
   if (/json|parse|schema|validation|zod|invalid response|structured output|judge returned|judge selected|judge evaluation|comparison/.test(normalized)) {
     return "invalid_response" as const;
   }
-  if (/fetch|network|socket|timeout|timed out|econn|enotfound|dns/.test(normalized)) return "network" as const;
+  if (/fetch|network|socket|timeout|timed out|econn|enotfound|dns|overload|\b529\b|\b503\b|service unavailable|temporarily unavailable|internal server error/.test(normalized)) {
+    return "network" as const;
+  }
   return "unknown" as const;
 }
 

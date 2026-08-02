@@ -63,7 +63,7 @@ const judgeResponseSchema = z.object({
 
 const pairJudgeResponseSchema = z.object({
   winnerSubmissionId: z.string(),
-  rationale: z.string().min(20).max(500),
+  rationale: z.string().min(5).max(500),
 });
 
 const judgeJsonSchema = {
@@ -374,7 +374,7 @@ async function judgeWithAnthropic(
 
   const evaluations = new Array<ArenaEvaluation>(comparisons.length);
   let nextIndex = 0;
-  const workerCount = Math.min(3, comparisons.length);
+  const workerCount = Math.min(1, comparisons.length);
   await Promise.all(Array.from({ length: workerCount }, async () => {
     while (nextIndex < comparisons.length) {
       const index = nextIndex;
@@ -384,8 +384,8 @@ async function judgeWithAnthropic(
       const allowedWinners = [comparison.left.id, comparison.right.id];
       const message = await client.messages.create({
         model,
-        max_tokens: 700,
-        system: "Blindly judge one pair of research reports. Use only report quality against the supplied criterion. Never use identity, price, or global reputation. Call submit_pairwise_judgment exactly once.",
+        max_tokens: 900,
+        system: "Blindly judge one pair of research reports. Use only report quality against the supplied criterion. Never use identity, price, or global reputation. Call submit_pairwise_judgment exactly once with the winning supplied submission ID and a complete evidence-based rationale of at least 20 characters.",
         messages: [{
           role: "user",
           content: `Criterion:\n${JSON.stringify(comparison.criterion)}\n\nLeft submission ${comparison.left.id}:\n${JSON.stringify(comparison.left.report)}\n\nRight submission ${comparison.right.id}:\n${JSON.stringify(comparison.right.report)}`,
