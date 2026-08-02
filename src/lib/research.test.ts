@@ -81,10 +81,10 @@ test("validates Anthropic judgment tool input against the evaluation contract", 
 
 test("validates one pairwise Anthropic judgment", () => {
   const judgment = {
-    winnerSubmissionId: "submission-left",
+    winner: "left",
     rationale: "The left report provides stronger cited evidence for the supplied criterion.",
-  };
+  } as const;
 
   assert.deepEqual(validatePairJudgeResponse(judgment), judgment);
-  assert.throws(() => validatePairJudgeResponse({ ...judgment, rationale: "bad" }));
+  assert.throws(() => validatePairJudgeResponse({ ...judgment, winner: "submission-left" }));
 });

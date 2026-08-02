@@ -62,8 +62,8 @@ const judgeResponseSchema = z.object({
 });
 
 const pairJudgeResponseSchema = z.object({
-  winnerSubmissionId: z.string(),
-  rationale: z.string().min(5).max(500),
+  winner: z.enum(["left", "right"]),
+  rationale: z.string().min(1).max(1000),
 });
 
 const judgeJsonSchema = {
@@ -381,11 +381,10 @@ async function judgeWithAnthropic(
       nextIndex += 1;
       const comparison = comparisons[index]!;
       const toolName = "submit_pairwise_judgment";
-      const allowedWinners = [comparison.left.id, comparison.right.id];
       const message = await client.messages.create({
         model,
         max_tokens: 900,
-        system: "Blindly judge one pair of research reports. Use only report quality against the supplied criterion. Never use identity, price, or global reputation. Call submit_pairwise_judgment exactly once with the winning supplied submission ID and a complete evidence-based rationale of at least 20 characters.",
+        system: "Blindly judge one pair of research reports. Use only report quality against the supplied criterion. Never use identity, price, or global reputation. Call submit_pairwise_judgment exactly once with winner set to left or right and a complete evidence-based rationale.",
         messages: [{
           role: "user",
           content: `Criterion:\n${JSON.stringify(comparison.criterion)}\n\nLeft submission ${comparison.left.id}:\n${JSON.stringify(comparison.left.report)}\n\nRight submission ${comparison.right.id}:\n${JSON.stringify(comparison.right.report)}`,
@@ -396,9 +395,9 @@ async function judgeWithAnthropic(
           input_schema: {
             type: "object",
             additionalProperties: false,
-            required: ["winnerSubmissionId", "rationale"],
+            required: ["winner", "rationale"],
             properties: {
-              winnerSubmissionId: { type: "string", enum: allowedWinners },
+              winner: { type: "string", enum: ["left", "right"] },
               rationale: { type: "string" },
             },
           },
@@ -406,15 +405,12 @@ async function judgeWithAnthropic(
         tool_choice: { type: "tool", name: toolName, disable_parallel_tool_use: true },
       });
       const parsed = validatePairJudgeResponse(requireAnthropicToolInput(message.content, toolName));
-      if (!allowedWinners.includes(parsed.winnerSubmissionId)) {
-        throw new Error("Anthropic judge selected a submission outside the comparison");
-      }
       evaluations[index] = {
         id: randomUUID(),
         criterionId: comparison.criterion.id,
         leftSubmissionId: comparison.left.id,
         rightSubmissionId: comparison.right.id,
-        winnerSubmissionId: parsed.winnerSubmissionId,
+        winnerSubmissionId: parsed.winner === "left" ? comparison.left.id : comparison.right.id,
         rationale: parsed.rationale,
       };
     }
