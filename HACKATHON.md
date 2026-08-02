@@ -36,13 +36,18 @@ experience are new hackathon work in this repository.
 
 ## submission evidence checklist
 
-- [ ] working public deployment
-- [ ] successful Prava sandbox transaction with completed final status
-- [ ] visible research-agent decision and purchase trail
-- [ ] failure handling for declined or over-budget charges
-- [ ] short demo video
-- [ ] public repository link
-- [ ] architecture and setup documentation
-- [ ] pre-existing-work disclosure
-- [ ] screenshots with no credentials or personal data
+- [x] working public deployment
+- [x] successful Prava sandbox transaction with completed final status
+- [x] visible research-agent decision and purchase trail
+- [x] failure handling for provider, payment, and duplicate-settlement errors
+- [x] short demo video recorded
+- [x] public repository link
+- [x] architecture and setup documentation
+- [x] pre-existing-work disclosure
+- [x] screenshots with no credentials or personal data
+- [ ] demo uploaded to YouTube by Max and linked
+- [ ] project icon and teammate list confirmed
 - [ ] Devfolio submission published before the deadline
+
+The exact short submission copy, eligible tracks, verified live evidence, and
+remaining manual steps are in [SUBMISSION.md](SUBMISSION.md).

@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/ackrate-v1.png" alt="ackrate" width="280">
+</p>
+
 ```text
  █████╗  ██████╗██╗  ██╗██████╗  █████╗ ████████╗███████╗
 ██╔══██╗██╔════╝██║ ██╔╝██╔══██╗██╔══██╗╚══██╔══╝██╔════╝
@@ -212,6 +216,16 @@ credentials, Prava secrets, one-time card credentials, or losing report bodies.
 
 ## Demo walkthrough
 
+```mermaid
+flowchart LR
+    Fund["1. Fund<br/>Approve a bounded budget"]
+    Research["2. Research<br/>Agents submit priced evidence"]
+    Judge["3. Judge<br/>Blind criterion-level ELO"]
+    Purchase["4. Purchase<br/>Buy the best bundle in budget"]
+    Reveal["5. Reveal<br/>Unlock winners and sources"]
+    Fund --> Research --> Judge --> Purchase --> Reveal
+```
+
 1. Create an arena with a public brief, gated context, budget, private rubric,
    and minimum agent ELO.
 2. Approve the one-time budget on Prava's hosted sandbox surface in current
@@ -223,6 +237,12 @@ credentials, Prava secrets, one-time card credentials, or losing report bodies.
 
 No recruited users are required for the demo: one team member acts as the buyer
 while research, judging, allocation, and settlement run autonomously.
+
+### Product screens
+
+| Create the arena | Reveal the purchased evidence |
+| --- | --- |
+| ![Create a research arena](docs/screenshots/create-arena.png) | ![Winning evidence purchased](docs/screenshots/winning-evidence-reveal.png) |
 
 ## Technology
 
@@ -336,6 +356,7 @@ JUDGE_GATE_ARENA_ID=<completed-arena-id> npm run judge:gate
 | [FRONTEND_HANDOFF.md](FRONTEND_HANDOFF.md) | Frontend implementation contract. |
 | [USERJOURNEY.md](USERJOURNEY.md) | Product rationale and buyer journey. |
 | [HACKATHON.md](HACKATHON.md) | Demo and submission guidance. |
+| [SUBMISSION.md](SUBMISSION.md) | Short Devfolio copy, track fit, evidence, and final publish checklist. |
 | [Judge readiness gate](docs/JUDGE_GATE.md) | Static and live evidence checks mapped to the published judging expectations. |
 | [Package provenance](docs/PACKAGE_PROVENANCE.md) | Published package lineage and compatibility boundary. |
 
