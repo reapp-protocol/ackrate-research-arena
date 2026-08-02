@@ -65,6 +65,10 @@ Button: **Authorize $[budget] with Prava** →
 
 - If `payment.mode === "prava"`, open the returned `payment.iframeUrl` in a new
   tab. Keep that URL only in memory; never store or log it.
+- Complete the hosted sandbox approval in a WebAuthn-capable browser such as
+  current Safari or Chrome. Embedded/in-app browsers may not support the passkey
+  step. Use only the sandbox test credentials supplied by Prava; never use a
+  real card or place test card values in application code or documentation.
 - If `payment.mode === "demo"`, show a prominent **Demo payment rail** badge and
   continue immediately from the returned `funded` state.
 
@@ -147,6 +151,9 @@ contains model responses, prompts, keys, private criteria, or losing research.
 For a funded arena, show **Retry research** and call the same `/run` endpoint.
 Never advance the UI optimistically. A settlement failure remains
 `ready_to_settle` and should show **Retry purchase** without rerunning research.
+The API revalidates the arena's original mandate before retrying. Disable the
+button while the request is pending; `SETTLEMENT_IN_PROGRESS` means keep polling
+the arena rather than submitting another charge.
 
 ## exact abstract-to-UI mapping
 

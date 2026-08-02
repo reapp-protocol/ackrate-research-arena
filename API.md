@@ -202,7 +202,11 @@ ready_to_settle --charge fails--> ready_to_settle + payment.failed
 ```
 
 Use the returned state after every mutation. `settle` is idempotent after
-completion. The Prava charge uses an arena-derived idempotency reference.
+completion. After a failed charge, retrying settlement revalidates the exact
+mandate originally attached to that arena before requesting fresh credentials.
+It never substitutes another active mandate belonging to the same buyer. A
+second request while settlement is already running fails closed. The Prava
+charge uses an arena-derived idempotency reference.
 
 ## endpoints
 
@@ -275,6 +279,11 @@ marketplace settlement, reports `APPROVED` or `DECLINED`, and returns `complete`
 only after Prava accepts the report. The credential is never logged, persisted,
 or returned to the frontend.
 
+If the provider rejects credential issuance, the winning bundle remains locked
+in `ready_to_settle`. A retry first confirms that the same mandate is still
+active. If it is no longer active, the API returns
+`PRAVA_MANDATE_NOT_ACTIVE` instead of charging a different mandate.
+
 At `complete`, winning reports and the final bundle unlock. Losing research is
 discarded; only its competition metadata remains.
 
@@ -310,6 +319,7 @@ export async function arenaRequest<T>(path: string, init?: RequestInit): Promise
 | 409 | `INVALID_ARENA_STATE` | Refetch arena |
 | 409 | `BUDGET_NOT_AUTHORIZED` | Return to funding |
 | 409 | `BUDGET_EXCEEDED` | Block settlement |
+| 409 | `SETTLEMENT_IN_PROGRESS` | Keep polling the arena; do not submit again |
 | 409 | `PRAVA_MANDATE_NOT_ACTIVE` | Refresh payment |
 | 402/4xx | Prava code | Show message and both request IDs |
 | 503 | `PRAVA_NOT_CONFIGURED` | Operator configuration error |

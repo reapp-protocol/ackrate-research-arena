@@ -15,7 +15,7 @@
     "judge:gate:static": "node scripts/judge-gate.mjs --static",
     "lint": "tsc -p tsconfig.json --noEmit",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "node --import tsx --test src/app.test.ts src/lib/orchestrator.test.ts src/lib/research.test.ts src/lib/stellar-anchor.test.ts",
+    "test": "node --import tsx --test src/app.test.ts src/lib/orchestrator.test.ts src/lib/prava.test.ts src/lib/research.test.ts src/lib/settlement.test.ts src/lib/stellar-anchor.test.ts",
     "test:app": "node --import tsx --test src/app.test.ts",
     "test:orchestrator": "node --import tsx --test src/lib/orchestrator.test.ts",
     "test:stellar": "node --import tsx --test src/lib/stellar-anchor.test.ts"

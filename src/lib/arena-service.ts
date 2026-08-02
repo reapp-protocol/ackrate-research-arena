@@ -12,7 +12,7 @@ import {
 } from "./stellar-anchor.js";
 import { ProviderOrchestrationError } from "./orchestrator.js";
 import { getArena, listArenas, saveArena } from "./store.js";
-import type { Arena, CreateArenaInput, Criterion } from "./types.js";
+import type { Arena, CreateArenaInput, Criterion, PaymentState } from "./types.js";
 
 export class ArenaServiceError extends Error {
   constructor(
@@ -22,6 +22,14 @@ export class ArenaServiceError extends Error {
   ) {
     super(message);
   }
+}
+
+export function settlementPaymentAction(
+  payment: PaymentState,
+): "block" | "refresh" | "charge" {
+  if (payment.status === "charging") return "block";
+  if (payment.status === "active" && payment.mandateId) return "charge";
+  return "refresh";
 }
 
 function now() {
@@ -147,11 +155,12 @@ export async function authorizeArena(id: string) {
 export async function refreshArenaPayment(id: string) {
   const arena = await requireArena(id);
   if (arena.payment.mode === "demo") return arena;
-  const mandate = await findActiveMandate(arena);
+  const mandate = await findActiveMandate(arena, arena.payment.mandateId);
   if (mandate) {
     arena.status = arena.status === "funding_pending" ? "funded" : arena.status;
     arena.payment.status = "active";
     arena.payment.mandateId = mandate.id;
+    delete arena.payment.error;
     arena.updatedAt = now();
     await saveArena(arena);
   }
@@ -300,13 +309,22 @@ export async function settleArena(id: string) {
     return saveArena(arena);
   }
 
-  if (!arena.payment.mandateId) {
+  const paymentAction = settlementPaymentAction(arena.payment);
+  if (paymentAction === "block") {
+    throw new ArenaServiceError(
+      "Settlement is already in progress",
+      409,
+      "SETTLEMENT_IN_PROGRESS",
+    );
+  }
+  if (paymentAction === "refresh") {
     arena = await refreshArenaPayment(id);
   }
   if (!arena.payment.mandateId || arena.payment.status !== "active") {
     throw new ArenaServiceError("Prava mandate is not active", 409, "PRAVA_MANDATE_NOT_ACTIVE");
   }
   arena.payment.status = "charging";
+  delete arena.payment.error;
   arena.updatedAt = now();
   await saveArena(arena);
   try {

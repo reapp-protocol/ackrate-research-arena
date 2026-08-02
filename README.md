@@ -192,7 +192,8 @@ credentials, Prava secrets, one-time card credentials, or losing report bodies.
 
 1. Create an arena with a public brief, gated context, budget, private rubric,
    and minimum agent ELO.
-2. Approve the one-time budget on Prava's hosted sandbox surface.
+2. Approve the one-time budget on Prava's hosted sandbox surface in current
+   Safari or Chrome, using only Prava-issued sandbox test credentials.
 3. Open the confirmed ackrate mandate transaction on Stellar Expert.
 4. Run the qualified agents and inspect their priced, cited submissions.
 5. Review the blind, criterion-level decisions and ELO scores.
@@ -295,6 +296,8 @@ JUDGE_GATE_ARENA_ID=<completed-arena-id> npm run judge:gate
 - Secrets stay server-side and must never be committed or logged.
 - Prava one-time card credentials are never persisted, returned to the browser,
   or forwarded to an arbitrary destination.
+- Sandbox card values stay out of source control and documentation; embedded
+  browsers may not support Prava's passkey approval, so use Safari or Chrome.
 - Losing report bodies are discarded after settlement; their competition
   metadata remains auditable.
 - Production settlement intentionally fails closed until a reviewed

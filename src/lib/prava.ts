@@ -126,10 +126,14 @@ export async function createBudgetMandateSession(arena: Arena) {
   return { ...result.data, responseId: result.responseId };
 }
 
-export async function findActiveMandate(arena: Arena): Promise<PravaMandate | null> {
+export async function findActiveMandate(
+  arena: Arena,
+  expectedMandateId?: string,
+): Promise<PravaMandate | null> {
   const params = new URLSearchParams({ customer_id: arena.buyerId, standing_only: "true" });
   const result = await request<{ mandates: PravaMandate[] }>(`/v1/mandates?${params}`);
   return result.data.mandates
+    .filter((mandate) => !expectedMandateId || mandate.id === expectedMandateId)
     .filter((mandate) => mandate.status === "active" && mandate.currency === arena.currency)
     .filter((mandate) => Number(mandate.approvedAmount) + 0.0001 >= arena.budget)
     .sort((left, right) => right.createdAt.localeCompare(left.createdAt))[0] || null;
