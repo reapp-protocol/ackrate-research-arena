@@ -48,6 +48,71 @@ budget-compliant evidence portfolio.
   <a href="USERJOURNEY.md">User journey</a>
 </p>
 
+## Hackathon submission
+
+### The short version
+
+Getting a polished research answer is easy now. Knowing which answer deserves
+your money is not. With ackrate, a buyer posts a question and budget, research
+agents compete, and a blind judge buys the strongest evidence that fits the
+budget. Next, we want to open the arena to outside agents.
+
+### Project details
+
+| Item | Value |
+| --- | --- |
+| Name | **ackrate research arena** |
+| Tagline | **research agents compete. evidence wins.** |
+| Icon | [`assets/ackrate-v1.png`](assets/ackrate-v1.png) |
+| Platform | **Web** |
+| Live product | <https://ackratearena.xyz/app> |
+| Completed result | <https://ackratearena.xyz/arena/a3007788-e435-4769-a3ef-e6b0c011d07e> |
+| Public repository | <https://github.com/reapp-protocol/ackrate-research-arena> |
+
+### What broke and how we fixed it
+
+- Prava's sandbox approval link is single-use, and the passkey step did not work
+  in every browser. We made retries reuse the exact original mandate, retained
+  provider request IDs, and completed a clean payment from start to finish.
+- Our first OpenAI key ran out of credit halfway through a run. We added a
+  one-time fallback to Claude, then moved OpenAI back to the preferred path when
+  the funded key was ready.
+- OpenAI rejected `uri` inside our structured-output schema. We replaced it with
+  an HTTPS pattern and added a regression test for that exact bug.
+- A Stellar transaction proves what the buyer approved; it is not the payment.
+  We kept Stellar as the audit trail and Prava as the payment rail.
+
+### Technologies and eligible tracks
+
+We used Prava / Visa Intelligent Commerce, the OpenAI Responses API with web
+search, Anthropic Claude fallback, our ackrate AP2 SDK, Stellar/Soroban,
+Express, TypeScript, Supabase, Railway, and a web frontend.
+
+- **Main track** — agents research, decide, and complete the purchase.
+- **Visa / Prava** — Prava authorizes the budget and completes the transaction.
+- **OpenAI** — OpenAI researches the brief and judges the competing reports.
+- **Best UX** — one five-step journey: Fund, Research, Judge, Purchase, Reveal.
+
+Linq, Localhost, Senso, and Project Nanda are not selected because this project
+does not use their technology.
+
+### Final Devfolio checklist
+
+- [x] Public repository and working product links are ready.
+- [x] Name, tagline, logo, platform, and short description are ready.
+- [x] Concrete integration challenges and fixes are documented.
+- [x] Technologies and eligible tracks are listed.
+- [x] Create and reveal screenshots are in [`docs/screenshots`](docs/screenshots).
+- [x] Completed Prava transaction, Stellar proof, and live result are linked.
+- [x] Pre-existing work and new hackathon work are disclosed below.
+- [ ] Add every teammate before one member submits.
+- [ ] Upload the logo and screenshots; use the reveal screen as the cover image.
+- [ ] Add the public links above and select Web plus the eligible tracks.
+- [ ] Click **Publish Project** and verify the status reads **Submitted**.
+
+Deadline from the Prava email: **August 2 at 7:00 PM PT / August 3 at 7:30 AM
+IST**.
+
 ## Overview
 
 Most AI research stops at the first generated answer. ackrate creates a market
