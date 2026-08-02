@@ -1,0 +1,56 @@
+/** Minimal SEP-41 helpers (approve + balance) for approving the contract for its
+ *  allowance and reading balances — built directly on @stellar/stellar-sdk so
+ *  the SDK has no CLI dependency. */
+import { Address, Contract, TransactionBuilder, nativeToScVal, scValToNative, rpc, } from "@stellar/stellar-sdk";
+const INCLUSION_FEE = "100000";
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+async function settle(server, hash) {
+    let res = await server.getTransaction(hash);
+    for (let i = 0; res.status === "NOT_FOUND" && i < 30; i += 1) {
+        await sleep(1000);
+        res = await server.getTransaction(hash);
+    }
+    if (res.status !== "SUCCESS") {
+        throw new Error(`transaction ${hash} did not succeed: ${res.status}`);
+    }
+}
+/** User approves the contract for a SEP-41 allowance: approve(from=owner, spender, amount). */
+export async function approve(net, tokenId, owner, spender, amount, expirationLedger) {
+    const server = new rpc.Server(net.rpcUrl, { allowHttp: net.rpcUrl.startsWith("http://") });
+    const source = await server.getAccount(owner.publicKey());
+    const exp = expirationLedger ?? (await server.getLatestLedger()).sequence + 17280;
+    const op = new Contract(tokenId).call("approve", new Address(owner.publicKey()).toScVal(), new Address(spender).toScVal(), nativeToScVal(amount, { type: "i128" }), nativeToScVal(exp, { type: "u32" }));
+    const built = new TransactionBuilder(source, {
+        fee: INCLUSION_FEE,
+        networkPassphrase: net.networkPassphrase,
+    })
+        .addOperation(op)
+        .setTimeout(60)
+        .build();
+    const prepared = await server.prepareTransaction(built);
+    prepared.sign(owner);
+    const sent = await server.sendTransaction(prepared);
+    if (sent.errorResult)
+        throw new Error(`approve submit failed: ${sent.status}`);
+    await settle(server, sent.hash);
+    return sent.hash;
+}
+/** Read a SEP-41 balance (simulation only, no signing). */
+export async function balance(net, tokenId, who) {
+    const server = new rpc.Server(net.rpcUrl, { allowHttp: net.rpcUrl.startsWith("http://") });
+    const source = await server.getAccount(who).catch(() => null);
+    // Use the owner as source if it exists; otherwise any funded account works for a read.
+    const acct = source ?? (await server.getAccount(who));
+    const op = new Contract(tokenId).call("balance", new Address(who).toScVal());
+    const tx = new TransactionBuilder(acct, {
+        fee: INCLUSION_FEE,
+        networkPassphrase: net.networkPassphrase,
+    })
+        .addOperation(op)
+        .setTimeout(60)
+        .build();
+    const sim = await server.simulateTransaction(tx);
+    if (rpc.Api.isSimulationError(sim))
+        throw new Error(`balance sim failed: ${sim.error}`);
+    return scValToNative(sim.result.retval);
+}

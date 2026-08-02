@@ -1,0 +1,45 @@
+{
+  "name": "@ackrate/core",
+  "version": "0.3.2",
+  "description": "High-level TypeScript SDK for contract-enforced ackrate agent-payment mandates on Stellar.",
+  "keywords": [
+    "stellar",
+    "soroban",
+    "ackrate",
+    "agent-payments",
+    "x402",
+    "ap2",
+    "mandate",
+    "payments",
+    "ai-agents",
+    "sdk"
+  ],
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": ["dist"],
+  "dependencies": {
+    "@ackrate/stellar": "^0.2.3",
+    "@stellar/stellar-sdk": "^14.5.0",
+    "buffer": "6.0.3"
+  },
+  "license": "Apache-2.0",
+  "homepage": "https://github.com/reapp-protocol/ackrate-research-arena#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/reapp-protocol/ackrate-research-arena.git",
+    "directory": "packages/core"
+  },
+  "bugs": {
+    "url": "https://github.com/reapp-protocol/ackrate-research-arena/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

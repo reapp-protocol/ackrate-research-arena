@@ -1,0 +1,46 @@
+{
+  "name": "@ackrate/stellar",
+  "version": "0.2.3",
+  "description": "Typed MandateRegistry bindings, Stellar testnet configuration, and signing helpers for ackrate agent payments.",
+  "keywords": [
+    "stellar",
+    "soroban",
+    "ackrate",
+    "mandate",
+    "agent-payments",
+    "x402",
+    "ap2",
+    "sep-41",
+    "micropayments",
+    "ai-agents"
+  ],
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": ["dist"],
+  "dependencies": {
+    "@types/json-schema": "^7.0.15",
+    "@types/urijs": "^1.19.26",
+    "@stellar/stellar-sdk": "^14.5.0",
+    "buffer": "6.0.3"
+  },
+  "license": "Apache-2.0",
+  "homepage": "https://github.com/reapp-protocol/ackrate-research-arena#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/reapp-protocol/ackrate-research-arena.git",
+    "directory": "packages/stellar"
+  },
+  "bugs": {
+    "url": "https://github.com/reapp-protocol/ackrate-research-arena/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
