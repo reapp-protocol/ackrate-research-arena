@@ -232,7 +232,7 @@ export declare class Client extends ContractClient {
     /** Constructor/Initialization Args for the contract's `__constructor` method */
     { admin }: {
         admin: string;
-    }, 
+    },
     /** Options for initializing a Client as well as for calling a method, with extras specific to deploying. */
     options: MethodOptions & Omit<ContractClientOptions, "contractId"> & {
         /** The hash of the Wasm blob, which must already be installed on-chain. */

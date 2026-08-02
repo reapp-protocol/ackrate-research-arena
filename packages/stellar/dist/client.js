@@ -33,7 +33,7 @@ export class Client extends ContractClient {
     options;
     static async deploy(
     /** Constructor/Initialization Args for the contract's `__constructor` method */
-    { admin }, 
+    { admin },
     /** Options for initializing a Client as well as for calling a method, with extras specific to deploying. */
     options) {
         return ContractClient.deploy({ admin }, options);
