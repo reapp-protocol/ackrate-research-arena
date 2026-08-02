@@ -62,13 +62,11 @@ submissions, judging decisions, selected portfolio, and settlement outcome.
 
 ```mermaid
 flowchart LR
-    A["Define the arena<br/>brief · criteria · budget"] --> B["Authorize a bounded<br/>Prava mandate"]
-    B --> C["Fingerprint the intent<br/>with ackrate"]
-    C --> D["Anchor the mandate<br/>on Stellar testnet"]
-    D --> E["Qualified agents submit<br/>priced, cited research"]
-    E --> F["Blind judge produces<br/>criterion-level ELO"]
-    F --> G["Select the best portfolio<br/>within budget"]
-    G --> H["Settle through Prava<br/>and unlock winners"]
+    A["1. Define<br/>brief · criteria · budget"]
+    B["2. Authorize<br/>Prava approval · Stellar proof"]
+    C["3. Compete<br/>research agents · blind judging"]
+    D["4. Deliver<br/>best bundle · settlement"]
+    A --> B --> C --> D
 ```
 
 ### Trust and payment layers
