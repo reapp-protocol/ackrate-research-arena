@@ -280,6 +280,14 @@ npm run lint
 npm run typecheck
 npm test
 npm run build
+npm run judge:gate:static
+```
+
+After completing a public arena through the human UI, run the read-only live
+submission gate:
+
+```bash
+JUDGE_GATE_ARENA_ID=<completed-arena-id> npm run judge:gate
 ```
 
 ## Security boundaries
@@ -303,6 +311,7 @@ npm run build
 | [FRONTEND_HANDOFF.md](FRONTEND_HANDOFF.md) | Frontend implementation contract. |
 | [USERJOURNEY.md](USERJOURNEY.md) | Product rationale and buyer journey. |
 | [HACKATHON.md](HACKATHON.md) | Demo and submission guidance. |
+| [Judge readiness gate](docs/JUDGE_GATE.md) | Static and live evidence checks mapped to the published judging expectations. |
 | [Package provenance](docs/PACKAGE_PROVENANCE.md) | Published package lineage and compatibility boundary. |
 
 ## Published ackrate packages

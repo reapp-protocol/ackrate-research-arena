@@ -11,6 +11,8 @@
     "build": "tsc -p tsconfig.json",
     "start": "node dist/server.js",
     "gate": "npm run lint && npm run build && npm test && npm audit --omit=dev --audit-level=high",
+    "judge:gate": "node scripts/judge-gate.mjs",
+    "judge:gate:static": "node scripts/judge-gate.mjs --static",
     "lint": "tsc -p tsconfig.json --noEmit",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "node --import tsx --test src/app.test.ts src/lib/orchestrator.test.ts src/lib/research.test.ts src/lib/stellar-anchor.test.ts",
