@@ -24,7 +24,7 @@ const reportSchema = z.object({
   recommendation: z.string().min(20),
 });
 
-const reportJsonSchema = {
+export const reportJsonSchema = {
   type: "object",
   additionalProperties: false,
   required: ["title", "thesis", "findings", "risks", "recommendation"],
@@ -42,7 +42,7 @@ const reportJsonSchema = {
         properties: {
           claim: { type: "string", minLength: 5 },
           evidence: { type: "string", minLength: 10 },
-          sourceUrl: { type: "string", format: "uri" },
+          sourceUrl: { type: "string", pattern: "^https://" },
         },
       },
     },

@@ -1,11 +1,18 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  reportJsonSchema,
   requireAnthropicToolInput,
   validateJudgeResponse,
   validatePairJudgeResponse,
   validateResearchReport,
 } from "./research.js";
+
+test("keeps the OpenAI report schema within supported string formats", () => {
+  const sourceUrl = reportJsonSchema.properties.findings.items.properties.sourceUrl;
+  assert.deepEqual(sourceUrl, { type: "string", pattern: "^https://" });
+  assert.equal("format" in sourceUrl, false);
+});
 
 const validReport = {
   title: "A decision-grade research report",
