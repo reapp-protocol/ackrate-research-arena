@@ -66,6 +66,16 @@ const pairJudgeResponseSchema = z.object({
   rationale: z.string().min(1).max(1000),
 });
 
+const pairJudgeJsonSchema = {
+  type: "object",
+  additionalProperties: false,
+  required: ["winner", "rationale"],
+  properties: {
+    winner: { type: "string", enum: ["left", "right"] },
+    rationale: { type: "string" },
+  },
+} as const;
+
 const judgeJsonSchema = {
   type: "object",
   additionalProperties: false,
@@ -380,31 +390,23 @@ async function judgeWithAnthropic(
       const index = nextIndex;
       nextIndex += 1;
       const comparison = comparisons[index]!;
-      const toolName = "submit_pairwise_judgment";
       const message = await client.messages.create({
         model,
         max_tokens: 900,
-        system: "Blindly judge one pair of research reports. Use only report quality against the supplied criterion. Never use identity, price, or global reputation. Call submit_pairwise_judgment exactly once with winner set to left or right and a complete evidence-based rationale.",
+        system: "Blindly judge one pair of research reports. Use only report quality against the supplied criterion. Never use identity, price, or global reputation. Return winner as left or right with a complete evidence-based rationale.",
         messages: [{
           role: "user",
           content: `Criterion:\n${JSON.stringify(comparison.criterion)}\n\nLeft submission ${comparison.left.id}:\n${JSON.stringify(comparison.left.report)}\n\nRight submission ${comparison.right.id}:\n${JSON.stringify(comparison.right.report)}`,
         }],
-        tools: [{
-          name: toolName,
-          description: "Submit the winner and concise evidence-based rationale for this one blind comparison.",
-          input_schema: {
-            type: "object",
-            additionalProperties: false,
-            required: ["winner", "rationale"],
-            properties: {
-              winner: { type: "string", enum: ["left", "right"] },
-              rationale: { type: "string" },
-            },
-          },
-        }],
-        tool_choice: { type: "tool", name: toolName, disable_parallel_tool_use: true },
+        output_config: {
+          format: { type: "json_schema", schema: pairJudgeJsonSchema },
+        },
       });
-      const parsed = validatePairJudgeResponse(requireAnthropicToolInput(message.content, toolName));
+      const text = message.content.find((block) => block.type === "text");
+      if (!text || text.type !== "text") {
+        throw new Error("Anthropic returned invalid structured pairwise judgment");
+      }
+      const parsed = validatePairJudgeResponse(parseJson(text.text));
       evaluations[index] = {
         id: randomUUID(),
         criterionId: comparison.criterion.id,
