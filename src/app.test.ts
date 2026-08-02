@@ -177,8 +177,7 @@ test("readiness identifies every missing live dependency without exposing values
   assert.equal(readiness.payment, "unconfigured");
   assert.deepEqual(readiness.configurationErrors, [
     "DATABASE_URL is required",
-    "OPENAI_API_KEY is required",
-    "ANTHROPIC_API_KEY is required",
+    "The selected AI provider key is required",
     "PRAVA_SECRET_KEY is required",
     "FRONTEND_URL is required",
     "CORS_ORIGINS is required",

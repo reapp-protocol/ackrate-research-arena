@@ -237,7 +237,10 @@ export async function runArena(id: string) {
       };
     }
     await saveArena(arena);
-    throw error;
+    if (arena.failure.code === "MODEL_PROVIDERS_EXHAUSTED") {
+      throw new ArenaServiceError(arena.failure.message, 503, arena.failure.code);
+    }
+    throw new ArenaServiceError(arena.failure.message, 500, arena.failure.code);
   }
 }
 

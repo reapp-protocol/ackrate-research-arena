@@ -82,8 +82,7 @@ export function createApp() {
     const demoMode = process.env.DEMO_MODE !== "false";
     const configurationErrors = demoMode ? [] : [
       ...(!process.env.DATABASE_URL ? ["DATABASE_URL is required"] : []),
-      ...(!(process.env.OPENAI_API_KEY || process.env.OPEN_API_KEY) ? ["OPENAI_API_KEY is required"] : []),
-      ...(!process.env.ANTHROPIC_API_KEY ? ["ANTHROPIC_API_KEY is required"] : []),
+      ...(!providers.semanticJudge ? ["The selected AI provider key is required"] : []),
       ...(!process.env.PRAVA_SECRET_KEY ? ["PRAVA_SECRET_KEY is required"] : []),
       ...(!process.env.FRONTEND_URL ? ["FRONTEND_URL is required"] : []),
       ...(!process.env.CORS_ORIGINS ? ["CORS_ORIGINS is required"] : []),

@@ -29,8 +29,8 @@ const reportJsonSchema = {
   additionalProperties: false,
   required: ["title", "thesis", "findings", "risks", "recommendation"],
   properties: {
-    title: { type: "string" },
-    thesis: { type: "string" },
+    title: { type: "string", minLength: 3 },
+    thesis: { type: "string", minLength: 20 },
     findings: {
       type: "array",
       minItems: 3,
@@ -40,14 +40,14 @@ const reportJsonSchema = {
         additionalProperties: false,
         required: ["claim", "evidence", "sourceUrl"],
         properties: {
-          claim: { type: "string" },
-          evidence: { type: "string" },
-          sourceUrl: { type: "string" },
+          claim: { type: "string", minLength: 5 },
+          evidence: { type: "string", minLength: 10 },
+          sourceUrl: { type: "string", format: "uri" },
         },
       },
     },
-    risks: { type: "array", minItems: 2, maxItems: 6, items: { type: "string" } },
-    recommendation: { type: "string" },
+    risks: { type: "array", minItems: 2, maxItems: 6, items: { type: "string", minLength: 5 } },
+    recommendation: { type: "string", minLength: 20 },
   },
 } as const;
 
@@ -188,10 +188,19 @@ export function validatePairJudgeResponse(input: unknown) {
 }
 
 function availableProviders(): Record<ModelProvider, boolean> {
+  const policy = (process.env.AI_PROVIDER || "anthropic").toLowerCase();
+  const allowOpenAI = policy === "openai" || policy === "auto";
+  const allowAnthropic = policy === "anthropic" || policy === "auto";
   return {
-    openai: Boolean(process.env.OPENAI_API_KEY || process.env.OPEN_API_KEY),
-    anthropic: Boolean(process.env.ANTHROPIC_API_KEY),
+    openai: allowOpenAI && Boolean(process.env.OPENAI_API_KEY || process.env.OPEN_API_KEY),
+    anthropic: allowAnthropic && Boolean(process.env.ANTHROPIC_API_KEY),
   };
+}
+
+function preferredProvider(): ModelProvider {
+  return (process.env.AI_PROVIDER || "anthropic").toLowerCase() === "openai"
+    ? "openai"
+    : "anthropic";
 }
 
 async function researchWithOpenAI(arena: Arena, agent: AgentDefinition): Promise<ResearchReport> {
@@ -219,19 +228,28 @@ async function researchWithAnthropic(arena: Arena, agent: AgentDefinition): Prom
   if (!process.env.ANTHROPIC_API_KEY) throw new Error("ANTHROPIC_API_KEY is not configured");
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
   const toolName = "submit_research_report";
-  const message = await client.messages.create({
-    model: process.env.ANTHROPIC_MODEL || "claude-sonnet-4-5-20250929",
-    max_tokens: 2200,
-    system: "Produce one decision-grade research report by calling submit_research_report exactly once. Every finding must cite a real HTTPS source URL.",
-    messages: [{ role: "user", content: researchPrompt(arena, agent) }],
-    tools: [{
-      name: toolName,
-      description: "Submit the final cited research report for blind evaluation.",
-      input_schema: { ...reportJsonSchema, required: [...reportJsonSchema.required] },
-    }],
-    tool_choice: { type: "tool", name: toolName, disable_parallel_tool_use: true },
-  });
-  return validateResearchReport(requireAnthropicToolInput(message.content, toolName));
+  let lastError: unknown;
+  for (let attempt = 1; attempt <= 2; attempt += 1) {
+    try {
+      const message = await client.messages.create({
+        model: process.env.ANTHROPIC_MODEL || "claude-sonnet-4-5-20250929",
+        max_tokens: 2200,
+        system: "Produce one decision-grade research report by calling submit_research_report exactly once. Every finding must cite a real HTTPS source URL and satisfy the tool schema completely.",
+        messages: [{ role: "user", content: researchPrompt(arena, agent) }],
+        tools: [{
+          name: toolName,
+          description: "Submit the final cited research report for blind evaluation.",
+          input_schema: { ...reportJsonSchema, required: [...reportJsonSchema.required] },
+        }],
+        tool_choice: { type: "tool", name: toolName, disable_parallel_tool_use: true },
+      });
+      return validateResearchReport(requireAnthropicToolInput(message.content, toolName));
+    } catch (error) {
+      lastError = error;
+      if (attempt === 1) console.warn(`[research] Anthropic returned an invalid report for ${agent.id}; retrying once`);
+    }
+  }
+  throw lastError;
 }
 
 async function runLiveAgent(arena: Arena, agent: AgentDefinition): Promise<{
@@ -240,7 +258,7 @@ async function runLiveAgent(arena: Arena, agent: AgentDefinition): Promise<{
 }> {
   const result = await runWithProviderFailover({
     operation: `research agent ${agent.id}`,
-    preferred: agent.provider,
+    preferred: preferredProvider(),
     available: availableProviders(),
     execute: (provider) => provider === "openai"
       ? researchWithOpenAI(arena, agent)
@@ -422,9 +440,7 @@ async function judgeWithAnthropic(
 }
 
 async function runSemanticJudge(arena: Arena, submissions: ArenaSubmission[]) {
-  const preferred: ModelProvider = process.env.AI_JUDGE_PROVIDER === "anthropic"
-    ? "anthropic"
-    : "openai";
+  const preferred = preferredProvider();
   const result = await runWithProviderFailover({
     operation: "blind semantic judge",
     preferred,
