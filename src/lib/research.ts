@@ -29,8 +29,8 @@ const reportJsonSchema = {
   additionalProperties: false,
   required: ["title", "thesis", "findings", "risks", "recommendation"],
   properties: {
-    title: { type: "string", minLength: 3 },
-    thesis: { type: "string", minLength: 20 },
+    title: { type: "string" },
+    thesis: { type: "string" },
     findings: {
       type: "array",
       minItems: 3,
@@ -40,19 +40,14 @@ const reportJsonSchema = {
         additionalProperties: false,
         required: ["claim", "evidence", "sourceUrl"],
         properties: {
-          claim: { type: "string", minLength: 5 },
-          evidence: { type: "string", minLength: 10 },
-          sourceUrl: { type: "string", format: "uri" },
+          claim: { type: "string" },
+          evidence: { type: "string" },
+          sourceUrl: { type: "string" },
         },
       },
     },
-    risks: {
-      type: "array",
-      minItems: 2,
-      maxItems: 6,
-      items: { type: "string", minLength: 5 },
-    },
-    recommendation: { type: "string", minLength: 20 },
+    risks: { type: "array", minItems: 2, maxItems: 6, items: { type: "string" } },
+    recommendation: { type: "string" },
   },
 } as const;
 
@@ -73,8 +68,6 @@ const judgeJsonSchema = {
   properties: {
     comparisons: {
       type: "array",
-      minItems: 1,
-      maxItems: 50,
       items: {
         type: "object",
         additionalProperties: false,
@@ -84,7 +77,7 @@ const judgeJsonSchema = {
           leftSubmissionId: { type: "string" },
           rightSubmissionId: { type: "string" },
           winnerSubmissionId: { type: "string" },
-          rationale: { type: "string", minLength: 20, maxLength: 500 },
+          rationale: { type: "string" },
         },
       },
     },
@@ -216,7 +209,6 @@ async function researchWithAnthropic(arena: Arena, agent: AgentDefinition): Prom
       name: toolName,
       description: "Submit the final cited research report for blind evaluation.",
       input_schema: { ...reportJsonSchema, required: [...reportJsonSchema.required] },
-      strict: true,
     }],
     tool_choice: { type: "tool", name: toolName, disable_parallel_tool_use: true },
   });
@@ -363,7 +355,6 @@ async function judgeWithAnthropic(
       name: toolName,
       description: "Submit all blind criterion-level pairwise judgments for this arena.",
       input_schema: { ...judgeJsonSchema, required: [...judgeJsonSchema.required] },
-      strict: true,
     }],
     tool_choice: { type: "tool", name: toolName, disable_parallel_tool_use: true },
   });
