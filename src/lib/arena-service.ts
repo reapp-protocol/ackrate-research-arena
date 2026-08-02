@@ -49,7 +49,9 @@ function safeProviderFailureReason(message: string) {
   if (/\b429\b|quota|rate.?limit|credit|billing/.test(normalized)) return "quota" as const;
   if (/\b401\b|\b403\b|api.?key|authenticat|unauthoriz|forbidden/.test(normalized)) return "authentication" as const;
   if (/\b404\b|model.*(not found|unavailable|unknown)|unsupported model/.test(normalized)) return "model_unavailable" as const;
-  if (/json|parse|schema|validation|zod|invalid response/.test(normalized)) return "invalid_response" as const;
+  if (/json|parse|schema|validation|zod|invalid response|structured output|judge returned|judge selected|judge evaluation|comparison/.test(normalized)) {
+    return "invalid_response" as const;
+  }
   if (/fetch|network|socket|timeout|timed out|econn|enotfound|dns/.test(normalized)) return "network" as const;
   return "unknown" as const;
 }

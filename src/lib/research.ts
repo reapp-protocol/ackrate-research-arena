@@ -61,6 +61,11 @@ const judgeResponseSchema = z.object({
   })).min(1).max(50),
 });
 
+const pairJudgeResponseSchema = z.object({
+  winnerSubmissionId: z.string(),
+  rationale: z.string().min(20).max(500),
+});
+
 const judgeJsonSchema = {
   type: "object",
   additionalProperties: false,
@@ -166,6 +171,10 @@ export function validateResearchReport(input: unknown): ResearchReport {
 
 export function validateJudgeResponse(input: unknown) {
   return judgeResponseSchema.parse(input);
+}
+
+export function validatePairJudgeResponse(input: unknown) {
+  return pairJudgeResponseSchema.parse(input);
 }
 
 function availableProviders(): Record<ModelProvider, boolean> {
@@ -343,23 +352,75 @@ async function judgeWithAnthropic(
   submissions: ArenaSubmission[],
 ): Promise<ReturnType<typeof runBlindElo>> {
   if (!process.env.ANTHROPIC_API_KEY) throw new Error("ANTHROPIC_API_KEY is not configured for semantic judging");
-  const expectedCount = expectedComparisonCount(arena, submissions);
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-  const toolName = "submit_arena_judgments";
-  const message = await client.messages.create({
-    model: process.env.ANTHROPIC_MODEL || "claude-sonnet-4-5-20250929",
-    max_tokens: 3000,
-    system: "Judge the anonymous submissions and call submit_arena_judgments exactly once with every required comparison.",
-    messages: [{ role: "user", content: blindJudgePrompt(arena, submissions, expectedCount) }],
-    tools: [{
-      name: toolName,
-      description: "Submit all blind criterion-level pairwise judgments for this arena.",
-      input_schema: { ...judgeJsonSchema, required: [...judgeJsonSchema.required] },
-    }],
-    tool_choice: { type: "tool", name: toolName, disable_parallel_tool_use: true },
-  });
-  const parsed = validateJudgeResponse(requireAnthropicToolInput(message.content, toolName));
-  return applySemanticJudgments(arena, submissions, parsed);
+  const model = process.env.ANTHROPIC_MODEL || "claude-sonnet-4-5-20250929";
+  const comparisons: Array<{
+    criterion: Arena["criteria"][number];
+    left: ArenaSubmission;
+    right: ArenaSubmission;
+  }> = [];
+
+  for (const criterion of arena.criteria) {
+    for (let leftIndex = 0; leftIndex < submissions.length; leftIndex += 1) {
+      for (let rightIndex = leftIndex + 1; rightIndex < submissions.length; rightIndex += 1) {
+        comparisons.push({
+          criterion,
+          left: submissions[leftIndex]!,
+          right: submissions[rightIndex]!,
+        });
+      }
+    }
+  }
+
+  const evaluations = new Array<ArenaEvaluation>(comparisons.length);
+  let nextIndex = 0;
+  const workerCount = Math.min(3, comparisons.length);
+  await Promise.all(Array.from({ length: workerCount }, async () => {
+    while (nextIndex < comparisons.length) {
+      const index = nextIndex;
+      nextIndex += 1;
+      const comparison = comparisons[index]!;
+      const toolName = "submit_pairwise_judgment";
+      const allowedWinners = [comparison.left.id, comparison.right.id];
+      const message = await client.messages.create({
+        model,
+        max_tokens: 700,
+        system: "Blindly judge one pair of research reports. Use only report quality against the supplied criterion. Never use identity, price, or global reputation. Call submit_pairwise_judgment exactly once.",
+        messages: [{
+          role: "user",
+          content: `Criterion:\n${JSON.stringify(comparison.criterion)}\n\nLeft submission ${comparison.left.id}:\n${JSON.stringify(comparison.left.report)}\n\nRight submission ${comparison.right.id}:\n${JSON.stringify(comparison.right.report)}`,
+        }],
+        tools: [{
+          name: toolName,
+          description: "Submit the winner and concise evidence-based rationale for this one blind comparison.",
+          input_schema: {
+            type: "object",
+            additionalProperties: false,
+            required: ["winnerSubmissionId", "rationale"],
+            properties: {
+              winnerSubmissionId: { type: "string", enum: allowedWinners },
+              rationale: { type: "string" },
+            },
+          },
+        }],
+        tool_choice: { type: "tool", name: toolName, disable_parallel_tool_use: true },
+      });
+      const parsed = validatePairJudgeResponse(requireAnthropicToolInput(message.content, toolName));
+      if (!allowedWinners.includes(parsed.winnerSubmissionId)) {
+        throw new Error("Anthropic judge selected a submission outside the comparison");
+      }
+      evaluations[index] = {
+        id: randomUUID(),
+        criterionId: comparison.criterion.id,
+        leftSubmissionId: comparison.left.id,
+        rightSubmissionId: comparison.right.id,
+        winnerSubmissionId: parsed.winnerSubmissionId,
+        rationale: parsed.rationale,
+      };
+    }
+  }));
+
+  return applySemanticJudgments(arena, submissions, { comparisons: evaluations });
 }
 
 async function runSemanticJudge(arena: Arena, submissions: ArenaSubmission[]) {

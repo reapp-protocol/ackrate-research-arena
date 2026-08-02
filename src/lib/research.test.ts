@@ -3,6 +3,7 @@ import test from "node:test";
 import {
   requireAnthropicToolInput,
   validateJudgeResponse,
+  validatePairJudgeResponse,
   validateResearchReport,
 } from "./research.js";
 
@@ -76,4 +77,14 @@ test("validates Anthropic judgment tool input against the evaluation contract", 
   assert.throws(() => validateJudgeResponse({
     comparisons: [{ ...judgment.comparisons[0], rationale: "too short" }],
   }));
+});
+
+test("validates one pairwise Anthropic judgment", () => {
+  const judgment = {
+    winnerSubmissionId: "submission-left",
+    rationale: "The left report provides stronger cited evidence for the supplied criterion.",
+  };
+
+  assert.deepEqual(validatePairJudgeResponse(judgment), judgment);
+  assert.throws(() => validatePairJudgeResponse({ ...judgment, rationale: "too short" }));
 });
