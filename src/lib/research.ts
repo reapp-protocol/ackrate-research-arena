@@ -188,7 +188,7 @@ export function validatePairJudgeResponse(input: unknown) {
 }
 
 function availableProviders(): Record<ModelProvider, boolean> {
-  const policy = (process.env.AI_PROVIDER || "anthropic").toLowerCase();
+  const policy = (process.env.AI_PROVIDER || "auto").toLowerCase();
   const allowOpenAI = policy === "openai" || policy === "auto";
   const allowAnthropic = policy === "anthropic" || policy === "auto";
   return {
@@ -198,9 +198,9 @@ function availableProviders(): Record<ModelProvider, boolean> {
 }
 
 function preferredProvider(): ModelProvider {
-  return (process.env.AI_PROVIDER || "anthropic").toLowerCase() === "openai"
-    ? "openai"
-    : "anthropic";
+  return (process.env.AI_PROVIDER || "auto").toLowerCase() === "anthropic"
+    ? "anthropic"
+    : "openai";
 }
 
 async function researchWithOpenAI(arena: Arena, agent: AgentDefinition): Promise<ResearchReport> {
