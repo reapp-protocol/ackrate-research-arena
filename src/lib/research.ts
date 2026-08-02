@@ -29,8 +29,8 @@ const reportJsonSchema = {
   additionalProperties: false,
   required: ["title", "thesis", "findings", "risks", "recommendation"],
   properties: {
-    title: { type: "string" },
-    thesis: { type: "string" },
+    title: { type: "string", minLength: 3 },
+    thesis: { type: "string", minLength: 20 },
     findings: {
       type: "array",
       minItems: 3,
@@ -40,14 +40,19 @@ const reportJsonSchema = {
         additionalProperties: false,
         required: ["claim", "evidence", "sourceUrl"],
         properties: {
-          claim: { type: "string" },
-          evidence: { type: "string" },
-          sourceUrl: { type: "string" },
+          claim: { type: "string", minLength: 5 },
+          evidence: { type: "string", minLength: 10 },
+          sourceUrl: { type: "string", format: "uri" },
         },
       },
     },
-    risks: { type: "array", minItems: 2, maxItems: 6, items: { type: "string" } },
-    recommendation: { type: "string" },
+    risks: {
+      type: "array",
+      minItems: 2,
+      maxItems: 6,
+      items: { type: "string", minLength: 5 },
+    },
+    recommendation: { type: "string", minLength: 20 },
   },
 } as const;
 
@@ -68,6 +73,8 @@ const judgeJsonSchema = {
   properties: {
     comparisons: {
       type: "array",
+      minItems: 1,
+      maxItems: 50,
       items: {
         type: "object",
         additionalProperties: false,
@@ -77,7 +84,7 @@ const judgeJsonSchema = {
           leftSubmissionId: { type: "string" },
           rightSubmissionId: { type: "string" },
           winnerSubmissionId: { type: "string" },
-          rationale: { type: "string" },
+          rationale: { type: "string", minLength: 20, maxLength: 500 },
         },
       },
     },
@@ -146,6 +153,28 @@ function parseJson(text: string): unknown {
   return JSON.parse(stripped);
 }
 
+export function requireAnthropicToolInput(content: readonly unknown[], toolName: string): unknown {
+  const toolUse = content.find((block): block is { type: "tool_use"; name: string; input: unknown } => (
+    typeof block === "object"
+    && block !== null
+    && "type" in block
+    && block.type === "tool_use"
+    && "name" in block
+    && block.name === toolName
+    && "input" in block
+  ));
+  if (!toolUse) throw new Error(`Anthropic returned invalid structured output for ${toolName}`);
+  return toolUse.input;
+}
+
+export function validateResearchReport(input: unknown): ResearchReport {
+  return reportSchema.parse(input);
+}
+
+export function validateJudgeResponse(input: unknown) {
+  return judgeResponseSchema.parse(input);
+}
+
 function availableProviders(): Record<ModelProvider, boolean> {
   return {
     openai: Boolean(process.env.OPENAI_API_KEY || process.env.OPEN_API_KEY),
@@ -171,21 +200,27 @@ async function researchWithOpenAI(arena: Arena, agent: AgentDefinition): Promise
       },
     },
   });
-  return reportSchema.parse(parseJson(response.output_text));
+  return validateResearchReport(parseJson(response.output_text));
 }
 
 async function researchWithAnthropic(arena: Arena, agent: AgentDefinition): Promise<ResearchReport> {
   if (!process.env.ANTHROPIC_API_KEY) throw new Error("ANTHROPIC_API_KEY is not configured");
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+  const toolName = "submit_research_report";
   const message = await client.messages.create({
     model: process.env.ANTHROPIC_MODEL || "claude-sonnet-4-5-20250929",
     max_tokens: 2200,
-    system: "Return only valid JSON with keys title, thesis, findings, risks, recommendation. findings contains claim, evidence, sourceUrl.",
+    system: "Produce one decision-grade research report by calling submit_research_report exactly once. Every finding must cite a real HTTPS source URL.",
     messages: [{ role: "user", content: researchPrompt(arena, agent) }],
+    tools: [{
+      name: toolName,
+      description: "Submit the final cited research report for blind evaluation.",
+      input_schema: { ...reportJsonSchema, required: [...reportJsonSchema.required] },
+      strict: true,
+    }],
+    tool_choice: { type: "tool", name: toolName, disable_parallel_tool_use: true },
   });
-  const text = message.content.find((block) => block.type === "text");
-  if (!text || text.type !== "text") throw new Error("Anthropic returned no text report");
-  return reportSchema.parse(parseJson(text.text));
+  return validateResearchReport(requireAnthropicToolInput(message.content, toolName));
 }
 
 async function runLiveAgent(arena: Arena, agent: AgentDefinition): Promise<{
@@ -307,7 +342,7 @@ async function judgeWithOpenAI(
       },
     },
   });
-  const parsed = judgeResponseSchema.parse(parseJson(response.output_text));
+  const parsed = validateJudgeResponse(parseJson(response.output_text));
   return applySemanticJudgments(arena, submissions, parsed);
 }
 
@@ -318,15 +353,21 @@ async function judgeWithAnthropic(
   if (!process.env.ANTHROPIC_API_KEY) throw new Error("ANTHROPIC_API_KEY is not configured for semantic judging");
   const expectedCount = expectedComparisonCount(arena, submissions);
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+  const toolName = "submit_arena_judgments";
   const message = await client.messages.create({
     model: process.env.ANTHROPIC_MODEL || "claude-sonnet-4-5-20250929",
     max_tokens: 3000,
-    system: "Return only valid JSON. Do not include markdown fences or commentary.",
+    system: "Judge the anonymous submissions and call submit_arena_judgments exactly once with every required comparison.",
     messages: [{ role: "user", content: blindJudgePrompt(arena, submissions, expectedCount) }],
+    tools: [{
+      name: toolName,
+      description: "Submit all blind criterion-level pairwise judgments for this arena.",
+      input_schema: { ...judgeJsonSchema, required: [...judgeJsonSchema.required] },
+      strict: true,
+    }],
+    tool_choice: { type: "tool", name: toolName, disable_parallel_tool_use: true },
   });
-  const text = message.content.find((block) => block.type === "text");
-  if (!text || text.type !== "text") throw new Error("Anthropic returned no semantic judgment");
-  const parsed = judgeResponseSchema.parse(parseJson(text.text));
+  const parsed = validateJudgeResponse(requireAnthropicToolInput(message.content, toolName));
   return applySemanticJudgments(arena, submissions, parsed);
 }
 
