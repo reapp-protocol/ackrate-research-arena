@@ -57,13 +57,13 @@ const judgeResponseSchema = z.object({
     leftSubmissionId: z.string(),
     rightSubmissionId: z.string(),
     winnerSubmissionId: z.string(),
-    rationale: z.string().min(20).max(500),
+    rationale: z.string().min(20),
   })).min(1).max(50),
 });
 
 const pairJudgeResponseSchema = z.object({
   winner: z.enum(["left", "right"]),
-  rationale: z.string().min(1).max(1000),
+  rationale: z.string().min(1),
 });
 
 const pairJudgeJsonSchema = {

@@ -77,6 +77,11 @@ test("validates Anthropic judgment tool input against the evaluation contract", 
   assert.throws(() => validateJudgeResponse({
     comparisons: [{ ...judgment.comparisons[0], rationale: "too short" }],
   }));
+
+  const longRationale = "Detailed evidence-based comparison. ".repeat(1_000);
+  assert.equal(validateJudgeResponse({
+    comparisons: [{ ...judgment.comparisons[0], rationale: longRationale }],
+  }).comparisons[0]?.rationale, longRationale);
 });
 
 test("validates one pairwise Anthropic judgment", () => {
@@ -87,4 +92,10 @@ test("validates one pairwise Anthropic judgment", () => {
 
   assert.deepEqual(validatePairJudgeResponse(judgment), judgment);
   assert.throws(() => validatePairJudgeResponse({ ...judgment, winner: "submission-left" }));
+
+  const longRationale = "Detailed evidence-based comparison. ".repeat(1_000);
+  assert.equal(
+    validatePairJudgeResponse({ ...judgment, rationale: longRationale }).rationale,
+    longRationale,
+  );
 });
