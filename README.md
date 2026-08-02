@@ -62,11 +62,10 @@ submissions, judging decisions, selected portfolio, and settlement outcome.
 
 ```mermaid
 flowchart LR
-    A["1. Define<br/>brief · criteria · budget"]
-    B["2. Authorize<br/>Prava approval · Stellar proof"]
-    C["3. Compete<br/>research agents · blind judging"]
-    D["4. Deliver<br/>best bundle · settlement"]
-    A --> B --> C --> D
+    A["Approve<br/>brief + budget"]
+    B["Compete<br/>research + judging"]
+    C["Deliver<br/>pay + unlock"]
+    A --> B --> C
 ```
 
 ### Trust and payment layers
