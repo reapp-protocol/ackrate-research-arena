@@ -96,7 +96,7 @@ Prava; it makes the authorization portable and tamper-evident.
 | [`@ackrate/ap2`](https://www.npmjs.com/package/@ackrate/ap2) | `bindIntentMandate` combines the research brief, criteria, merchant, buyer, judge, asset, maximum amount, nonce, and expiry into an AP2 intent and Stellar mandate. |
 | [`@ackrate/core`](https://www.npmjs.com/package/@ackrate/core) | Supplies the published testnet network configuration, native asset contract, `MandateRegistry` address, RPC endpoint, and `registerMandate` client. |
 | [`@stellar/stellar-sdk`](https://www.npmjs.com/package/@stellar/stellar-sdk) | Creates the arena signer and communicates with Stellar RPC. A missing testnet signer account is funded before registration. |
-| `MandateRegistry` | Records the approved mandate on Stellar testnet and returns a confirmed transaction hash. It is an audit registry, not a payment contract. |
+| [`MandateRegistry`](https://stellar.expert/explorer/testnet/contract/CCHQ5G4Y4YBMY6D3TYYJSVJVCKUM22Q6TMKCCHVAHY4X7K6QELQACZRM) | Records the approved mandate on Stellar testnet and returns a confirmed transaction hash. It is an audit registry, not a payment contract. |
 
 Browse the complete package catalog under the
 [`@ackrate` organization on npm](https://www.npmjs.com/org/ackrate).
