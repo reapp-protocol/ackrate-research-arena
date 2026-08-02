@@ -13,7 +13,8 @@
 
 <p align="center">
   <a href="https://ackrate-research-arena-production.up.railway.app"><img alt="Live API" src="https://img.shields.io/badge/API-LIVE-238636?style=for-the-badge&labelColor=161B22"></a>&nbsp;
-  <a href="https://stellar.expert/explorer/testnet/tx/20b28c5a31a2c727380db7f9684086b7df46c4f57ef9aa37acbfbe44dc1c7682"><img alt="Verified Stellar transaction" src="https://img.shields.io/badge/STELLAR-VERIFIED_TX-30363D?style=for-the-badge&labelColor=161B22"></a>&nbsp;
+  <a href="https://ackratearena.xyz/arena/a3007788-e435-4769-a3ef-e6b0c011d07e"><img alt="Completed arena result" src="https://img.shields.io/badge/ARENA-LIVE_RESULT-238636?style=for-the-badge&labelColor=161B22"></a>&nbsp;
+  <a href="https://stellar.expert/explorer/testnet/tx/76ca076a7dc80ed5fda94db7b41cb238d19550941e9d9475873d675b47dbdae5"><img alt="Verified Stellar transaction" src="https://img.shields.io/badge/STELLAR-VERIFIED_TX-30363D?style=for-the-badge&labelColor=161B22"></a>&nbsp;
   <a href="https://www.npmjs.com/package/@ackrate/core"><img alt="ackrate core v0.3.1" src="https://img.shields.io/badge/%40ACKRATE%2FCORE-0.3.1-30363D?style=for-the-badge&labelColor=161B22"></a>&nbsp;
   <a href="https://ackrate-research-arena-production.up.railway.app/openapi.json"><img alt="OpenAPI 3.1 spec" src="https://img.shields.io/badge/SPEC-OAS_3.1-30363D?style=for-the-badge&labelColor=161B22"></a>
 </p>
@@ -57,6 +58,27 @@ around the answer instead:
 The result is a visible, auditable transaction—not a decorative payment step.
 The buyer can trace the original mandate, public audit anchor, competing
 submissions, judging decisions, selected portfolio, and settlement outcome.
+
+## Shareable arena results
+
+Every arena receives a stable GUID-based result URL:
+
+```text
+https://ackratearena.xyz/arena/<arena-guid>
+```
+
+The buyer can share this URL with collaborators or judges to reopen the same
+canonical result, including the purchased evidence bundle, cited sources,
+competition metadata, budget allocation, Prava settlement trail, ackrate
+fingerprint, and confirmed Stellar testnet proof. The API response is
+privacy-redacted: buyer email and qualified-agent private context are never
+returned, and losing report bodies are discarded after settlement.
+
+The GUID is a stable lookup identifier, not an authentication credential. The
+hackathon deployment intentionally has no end-user authentication and exposes
+frontend-safe arena summaries, so a result link is **shareable, not
+confidential**. A completed live example is available at
+[`a3007788…d07e`](https://ackratearena.xyz/arena/a3007788-e435-4769-a3ef-e6b0c011d07e).
 
 ## How it works
 
@@ -129,7 +151,7 @@ are returned with the arena state. Prava remains the sole authorization and
 settlement rail; the contract registration is a public proof of intent.
 
 **Verified testnet mandate:**
-[`20b28c5a…c1c7682`](https://stellar.expert/explorer/testnet/tx/20b28c5a31a2c727380db7f9684086b7df46c4f57ef9aa37acbfbe44dc1c7682)
+[`76ca076a…bdae5`](https://stellar.expert/explorer/testnet/tx/76ca076a7dc80ed5fda94db7b41cb238d19550941e9d9475873d675b47dbdae5)
 
 ## System architecture
 
